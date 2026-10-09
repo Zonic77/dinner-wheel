@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Spin for Dinner</title>
+<meta name="description" content="Spin a wheel to pick a restaurant within 10 miles of you.">
+<meta name="theme-color" content="#0f2a33">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Dinner Wheel">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f2a33;
+    --panel: #153843;
+    --line: #2a5361;
+    --text: #fbf8f1;
+    --muted: #9bb8c0;
+    --yellow: #f6c343;
+    --tomato: #e4572e;
+    --mint: #6fc3a5;
+    --sky: #5aa9d6;
+    --ink: #0f2a33;
+    --font: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    background: var(--bg);
+    overscroll-behavior-y: none;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    line-height: 1.45;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding:
+      max(20px, calc(env(safe-area-inset-top, 0px) + 12px))
+      max(20px, env(safe-area-inset-right, 0px))
+      max(32px, calc(env(safe-area-inset-bottom, 0px) + 16px))
+      max(20px, env(safe-area-inset-left, 0px));
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  ul.places, .result { -webkit-user-select: text; user-select: text; }
+  button, .seg button { touch-action: manipulation; min-height: 44px; }
+  select { font-size: 16px; min-height: 44px; } /* 16px stops iOS from zooming on focus */
+  main { max-width: 760px; margin: 0 auto; }
+  h1 {
+    font-size: clamp(2.2rem, 7vw, 3.6rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin: 12px 0 8px;
+  }
+  .lede { color: var(--muted); margin: 0 0 20px; max-width: 46ch; }
+
+  .status {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 18px;
+    font-size: 0.95rem;
+  }
+  .status.error { border-color: var(--tomato); }
+  .status button { margin-top: 10px; }
+
+  button {
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 999px;
+    border: 2px solid var(--yellow);
+    background: var(--yellow);
+    color: var(--ink);
+    padding: 10px 20px;
+  }
+  button.ghost { background: transparent; color: var(--text); border-color: var(--line); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible {
+    outline: 3px solid var(--sky);
+    outline-offset: 2px;
+  }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-bottom: 18px; }
+  .seg { display: inline-flex; border: 2px solid var(--line); border-radius: 999px; overflow: hidden; }
+  .seg button {
+    border: 0; border-radius: 0; background: transparent; color: var(--muted);
+    padding: 8px 16px;
+  }
+  .seg button[aria-pressed="true"] { background: var(--mint); color: var(--ink); }
+  .controls label { color: var(--muted); font-size: 0.9rem; display: inline-flex; gap: 8px; align-items: center; }
+  select {
+    font: inherit; background: var(--panel); color: var(--text);
+    border: 2px solid var(--line); border-radius: 8px; padding: 6px 10px;
+  }
+
+  .stage { position: relative; width: min(100%, 520px); aspect-ratio: 1; margin: 0 auto 18px; }
+  canvas { width: 100%; height: 100%; display: block; }
+  .pointer {
+    position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 16px solid transparent; border-right: 16px solid transparent;
+    border-top: 34px solid var(--text);
+    filter: drop-shadow(0 3px 0 rgba(0,0,0,0.35));
+    z-index: 2;
+  }
+  .hub {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: 22%; aspect-ratio: 1; border-radius: 50%;
+    font-size: clamp(1rem, 3.6vw, 1.4rem); font-weight: 800;
+    background: var(--yellow); color: var(--ink); border: 5px solid var(--bg);
+    padding: 0;
+    z-index: 3;
+  }
+
+  .result {
+    background: var(--yellow); color: var(--ink);
+    border-radius: 14px; padding: 18px 20px; margin-bottom: 28px;
+  }
+  .result[hidden] { display: none; }
+  .result h2 { margin: 0 0 4px; font-size: clamp(1.6rem, 5vw, 2.2rem); line-height: 1.05; letter-spacing: -0.02em; }
+  .result p { margin: 0 0 14px; }
+  .result .row { display: flex; flex-wrap: wrap; gap: 10px; }
+  .result a, .result button {
+    text-decoration: none; font-weight: 600; font-size: 0.95rem;
+    padding: 9px 16px; border-radius: 999px; border: 2px solid var(--ink);
+    background: var(--ink); color: var(--text);
+  }
+  .result button.ghost { background: transparent; color: var(--ink); border-color: var(--ink); }
+
+  .list-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  h3 { font-size: 1.2rem; margin: 0 0 8px; }
+  .count { color: var(--muted); font-size: 0.9rem; }
+  ul.places { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+  ul.places li {
+    display: flex; justify-content: space-between; gap: 12px;
+    padding: 10px 2px; border-bottom: 1px solid var(--line);
+  }
+  ul.places .name { font-weight: 600; }
+  ul.places .meta { color: var(--muted); font-size: 0.88rem; }
+  ul.places .dist { color: var(--mint); font-weight: 600; white-space: nowrap; }
+  footer { color: var(--muted); font-size: 0.8rem; margin-top: 28px; }
+  footer a { color: var(--muted); }
+
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Spin for dinner</h1>
+  <p class="lede">Finds restaurants and fast food within 10 miles of you, then lets the wheel decide.</p>
+
+  <div id="status" class="status" role="status" aria-live="polite">Waiting to find your location.</div>
+
+  <div class="controls" id="controls" hidden>
+    <div class="seg" role="group" aria-label="Place type">
+      <button type="button" data-filter="all" aria-pressed="true">All</button>
+      <button type="button" data-filter="restaurant" aria-pressed="false">Restaurants</button>
+      <button type="button" data-filter="fast_food" aria-pressed="false">Fast food</button>
+    </div>
+    <label>Slices on wheel
+      <select id="slices">
+        <option value="8">8</option>
+        <option value="12" selected>12</option>
+        <option value="16">16</option>
+        <option value="24">24</option>
+      </select>
+    </label>
+    <button type="button" class="ghost" id="reshuffle">Shuffle wheel</button>
+    <button type="button" class="ghost" id="relocate">Update location</button>
+  </div>
+
+  <div class="stage" id="stage" hidden>
+    <div class="pointer" aria-hidden="true"></div>
+    <canvas id="wheel" role="img" aria-label="Restaurant wheel"></canvas>
+    <button type="button" class="hub" id="spin">Spin</button>
+  </div>
+
+  <section class="result" id="result" hidden aria-live="polite">
+    <h2 id="r-name"></h2>
+    <p id="r-meta"></p>
+    <div class="row">
+      <a id="r-dir" target="_blank" rel="noopener">Get directions</a>
+      <button type="button" class="ghost" id="r-skip">Not this one</button>
+    </div>
+  </section>
+
+  <section id="list-section" hidden>
+    <div class="list-head">
+      <h3>Everything nearby</h3>
+      <span class="count" id="count"></span>
+    </div>
+    <ul class="places" id="places"></ul>
+  </section>
+
+  <footer>Place data from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors via the Overpass API. Coverage varies by area.</footer>
+</main>
+
+<script>
+(() => {
+  const RADIUS_MILES = 10;
+  const RADIUS_METERS = Math.round(RADIUS_MILES * 1609.344);
+  const COLORS = ["#e4572e", "#f6c343", "#6fc3a5", "#5aa9d6", "#f28c52"];
+  const ENDPOINTS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter"
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  const statusEl = $("status"), controls = $("controls"), stage = $("stage");
+  const resultEl = $("result"), listSection = $("list-section");
+  const canvas = $("wheel"), ctx = canvas.getContext("2d");
+  const spinBtn = $("spin");
+
+  let origin = null;
+  let places = [];          // all named places found
+  let excluded = new Set(); // ids removed via "Not this one"
+  let filter = "all";
+  let pool = [];            // places currently on the wheel
+  let rotation = 0;         // radians
+  let spinning = false;
+
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- status helpers ---------- */
+  function setStatus(msg, isError, actionLabel, action) {
+    statusEl.className = "status" + (isError ? " error" : "");
+    statusEl.textContent = msg;
+    if (actionLabel) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = actionLabel;
+      b.addEventListener("click", action);
+      statusEl.appendChild(document.createElement("br"));
+      statusEl.appendChild(b);
+    }
+  }
+
+  /* ---------- location ---------- */
+  function locate() {
+    if (!("geolocation" in navigator)) {
+      setStatus("This browser can't share its location. Try a current version of Chrome, Safari, Edge, or Firefox.", true);
+      return;
+    }
+    setStatus("Finding your location…");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        origin = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+        fetchPlaces();
+      },
+      (err) => {
+        const msgs = {
+          1: "Location permission was denied. Allow location access for this page in your browser settings, then try again.",
+          2: "Your device couldn't determine its location. Check that location services are on, then try again.",
+          3: "Finding your location timed out. Try again."
+        };
+        let msg = msgs[err.code] || "Couldn't get your location.";
+        if (location.protocol === "file:") {
+          msg += " If you opened this file directly, some browsers block location on file:// pages. Serve it with a local server (for example, python3 -m http.server) and open http://localhost:8000.";
+        }
+        setStatus(msg, true, "Try again", locate);
+      },
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 }
+    );
+  }
+
+  /* ---------- data ---------- */
+  async function fetchPlaces() {
+    setStatus("Searching within " + RADIUS_MILES + " miles…");
+    const { lat, lon } = origin;
+    const around = `(around:${RADIUS_METERS},${lat},${lon})`;
+    const query = `[out:json][timeout:25];(` +
+      `node["amenity"~"^(restaurant|fast_food)$"]${around};` +
+      `way["amenity"~"^(restaurant|fast_food)$"]${around};` +
+      `);out center tags;`;
+
+    let data = null, lastErr = null;
+    for (const url of ENDPOINTS) {
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: "data=" + encodeURIComponent(query)
+        });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        data = await res.json();
+        break;
+      } catch (e) { lastErr = e; }
+    }
+    if (!data) {
+      setStatus("Couldn't load nearby places (" + (lastErr ? lastErr.message : "network error") + "). Check your connection and try again.", true, "Try again", fetchPlaces);
+      return;
+    }
+
+    const seen = new Set();
+    places = [];
+    for (const el of data.elements) {
+      const tags = el.tags || {};
+      if (!tags.name) continue;
+      const plat = el.lat ?? (el.center && el.center.lat);
+      const plon = el.lon ?? (el.center && el.center.lon);
+      if (plat == null || plon == null) continue;
+      const key = tags.name.toLowerCase() + "|" + plat.toFixed(3) + "|" + plon.toFixed(3);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const miles = haversineMiles(lat, lon, plat, plon);
+      if (miles > RADIUS_MILES) continue;
+      places.push({
+        id: el.type + el.id,
+        name: tags.name,
+        type: tags.amenity,
+        cuisine: tags.cuisine ? tags.cuisine.split(";")[0].replace(/_/g, " ") : "",
+        lat: plat, lon: plon, miles
+      });
+    }
+    places.sort((a, b) => a.miles - b.miles);
+
+    if (!places.length) {
+      setStatus("No named restaurants found within " + RADIUS_MILES + " miles. Map data may be sparse in this area.", true, "Search again", fetchPlaces);
+      return;
+    }
+    setStatus("Found " + places.length + " places within " + RADIUS_MILES + " miles of you.");
+    controls.hidden = false; stage.hidden = false; listSection.hidden = false;
+    buildPool();
+    renderList();
+  }
+
+  function haversineMiles(lat1, lon1, lat2, lon2) {
+    const R = 3958.8, rad = Math.PI / 180;
+    const dLat = (lat2 - lat1) * rad, dLon = (lon2 - lon1) * rad;
+    const a = Math.sin(dLat / 2) ** 2 +
+      Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(a));
+  }
+
+  /* ---------- pool + list ---------- */
+  function candidates() {
+    return places.filter(p => !excluded.has(p.id) && (filter === "all" || p.type === filter));
+  }
+
+  function buildPool() {
+    const all = candidates();
+    const n = parseInt($("slices").value, 10);
+    // Fisher-Yates shuffle, then take n
+    const arr = all.slice();
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    pool = arr.slice(0, n);
+    resultEl.hidden = true;
+    spinBtn.disabled = pool.length < 2;
+    drawWheel();
+    renderList();
+  }
+
+  function renderList() {
+    const all = candidates();
+    $("count").textContent = all.length + " place" + (all.length === 1 ? "" : "s");
+    const ul = $("places");
+    ul.textContent = "";
+    for (const p of all) {
+      const li = document.createElement("li");
+      const left = document.createElement("div");
+      const name = document.createElement("div");
+      name.className = "name"; name.textContent = p.name;
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = (p.type === "fast_food" ? "Fast food" : "Restaurant") + (p.cuisine ? " · " + p.cuisine : "");
+      left.append(name, meta);
+      const dist = document.createElement("div");
+      dist.className = "dist"; dist.textContent = p.miles.toFixed(1) + " mi";
+      li.append(left, dist);
+      ul.appendChild(li);
+    }
+  }
+
+  /* ---------- wheel drawing ---------- */
+  function sizeCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    const size = canvas.clientWidth;
+    canvas.width = Math.round(size * dpr);
+    canvas.height = Math.round(size * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return size;
+  }
+
+  function drawWheel() {
+    const size = sizeCanvas();
+    const c = size / 2, r = c - 8;
+    ctx.clearRect(0, 0, size, size);
+
+    // rim
+    ctx.beginPath(); ctx.arc(c, c, r + 6, 0, Math.PI * 2);
+    ctx.fillStyle = "#fbf8f1"; ctx.fill();
+
+    if (!pool.length) return;
+    const n = pool.length, a = (Math.PI * 2) / n;
+
+    for (let i = 0; i < n; i++) {
+      const start = rotation + i * a, end = start + a;
+      ctx.beginPath(); ctx.moveTo(c, c);
+      ctx.arc(c, c, r, start, end); ctx.closePath();
+      ctx.fillStyle = COLORS[i % COLORS.length];
+      // avoid same color touching at the wrap point
+      if (n % COLORS.length === 1 && i === n - 1) ctx.fillStyle = "#8fa9b3";
+      ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = "#0f2a33"; ctx.stroke();
+
+      // label
+      ctx.save();
+      ctx.translate(c, c);
+      ctx.rotate(start + a / 2);
+      ctx.textAlign = "right"; ctx.textBaseline = "middle";
+      ctx.fillStyle = "#0f2a33";
+      const fontPx = Math.max(11, Math.min(18, size * (n > 16 ? 0.028 : 0.036)));
+      ctx.font = `600 ${fontPx}px "Bricolage Grotesque", system-ui, sans-serif`;
+      const maxW = r * 0.62;
+      ctx.fillText(fit(pool[i].name, maxW), r - 14, 0);
+      ctx.restore();
+    }
+  }
+
+  function fit(text, maxW) {
+    if (ctx.measureText(text).width <= maxW) return text;
+    let t = text;
+    while (t.length > 1 && ctx.measureText(t + "…").width > maxW) t = t.slice(0, -1);
+    return t.trimEnd() + "…";
+  }
+
+  /* ---------- spinning ---------- */
+  function spin() {
+    if (spinning || pool.length < 2) return;
+    spinning = true;
+    spinBtn.disabled = true;
+    resultEl.hidden = true;
+
+    const extraTurns = 5 + Math.floor(Math.random() * 3);
+    const target = rotation + extraTurns * Math.PI * 2 + Math.random() * Math.PI * 2;
+    const from = rotation;
+    const duration = reduceMotion ? 600 : 5000 + Math.random() * 1500;
+    const t0 = performance.now();
+
+    function frame(now) {
+      const t = Math.min(1, (now - t0) / duration);
+      const eased = 1 - Math.pow(1 - t, 4); // ease-out quart
+      rotation = from + (target - from) * eased;
+      drawWheel();
+      if (t < 1) requestAnimationFrame(frame);
+      else finish();
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function finish() {
+    spinning = false;
+    spinBtn.disabled = pool.length < 2;
+    const n = pool.length, a = (Math.PI * 2) / n, TWO = Math.PI * 2;
+    // pointer sits at the top (-90deg); find which slice covers that angle
+    const pointerAngle = ((-Math.PI / 2 - rotation) % TWO + TWO) % TWO;
+    const winner = pool[Math.floor(pointerAngle / a) % n];
+    showResult(winner);
+  }
+
+  function showResult(p) {
+    $("r-name").textContent = p.name;
+    const kind = p.type === "fast_food" ? "Fast food" : "Restaurant";
+    $("r-meta").textContent = kind + (p.cuisine ? " · " + p.cuisine : "") + " · " + p.miles.toFixed(1) + " miles away";
+    $("r-dir").href = "https://www.google.com/maps/dir/?api=1&destination=" + p.lat + "," + p.lon;
+    $("r-skip").onclick = () => { excluded.add(p.id); buildPool(); };
+    resultEl.hidden = false;
+    resultEl.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "nearest" });
+  }
+
+  /* ---------- events ---------- */
+  spinBtn.addEventListener("click", spin);
+  $("reshuffle").addEventListener("click", () => { if (!spinning) buildPool(); });
+  $("slices").addEventListener("change", () => { if (!spinning) buildPool(); });
+  controls.querySelectorAll("[data-filter]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (spinning) return;
+      filter = btn.dataset.filter;
+      controls.querySelectorAll("[data-filter]").forEach(b =>
+        b.setAttribute("aria-pressed", String(b === btn)));
+      buildPool();
+    });
+  });
+  $("relocate").addEventListener("click", () => {
+    if (spinning) return;
+    excluded = new Set();
+    resultEl.hidden = true;
+    locate();
+  });
+  window.addEventListener("resize", () => { if (!stage.hidden) drawWheel(); });
+
+  // Offline-capable app shell (only works over https or localhost)
+  if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    });
+  }
+
+  locate();
+})();
+</script>
+</body>
+</html>
