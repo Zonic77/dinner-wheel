@@ -340,20 +340,24 @@
       return;
     }
 
-    const seen = new Set();
-    places = [];
+    // One entry per unique restaurant name: keep only the location closest to you.
+    // Names are compared ignoring case, accents, punctuation, and spacing,
+    // so "McDonald's" and "McDonalds" count as the same restaurant.
+    const nameKey = (n) => n.normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase().replace(/[^a-z0-9]/g, "") || n.toLowerCase();
+    const closest = new Map();
     for (const el of data.elements) {
       const tags = el.tags || {};
       if (!tags.name) continue;
       const plat = el.lat ?? (el.center && el.center.lat);
       const plon = el.lon ?? (el.center && el.center.lon);
       if (plat == null || plon == null) continue;
-      const key = tags.name.toLowerCase() + "|" + plat.toFixed(3) + "|" + plon.toFixed(3);
-      if (seen.has(key)) continue;
-      seen.add(key);
       const miles = haversineMiles(lat, lon, plat, plon);
       if (miles > radius) continue;
-      places.push({
+      const key = nameKey(tags.name);
+      const existing = closest.get(key);
+      if (existing && existing.miles <= miles) continue;
+      closest.set(key, {
         id: el.type + el.id,
         name: tags.name,
         type: tags.amenity,
@@ -361,7 +365,7 @@
         lat: plat, lon: plon, miles
       });
     }
-    places.sort((a, b) => a.miles - b.miles);
+    places = Array.from(closest.values()).sort((a, b) => a.miles - b.miles);
 
     if (!places.length) {
       hideResults();

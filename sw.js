@@ -1,6 +1,6 @@
 // Caches the app shell so the page opens instantly and works offline.
 // Restaurant lookups still need a connection.
-const CACHE = "spin-for-dinner-v3";
+const CACHE = "spin-for-dinner-v4";
 const SHELL = ["./", "./index.html", "./manifest.json", "./icon-180.png", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", (e) => {
