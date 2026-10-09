@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Spin for Dinner</title>
-<meta name="description" content="Spin a wheel to pick a restaurant within 10 miles of you.">
+<meta name="description" content="Spin a wheel to pick a restaurant near you.">
 <meta name="theme-color" content="#0f2a33">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -102,7 +102,9 @@
     padding: 8px 16px;
   }
   .seg button[aria-pressed="true"] { background: var(--mint); color: var(--ink); }
-  .controls label { color: var(--muted); font-size: 0.9rem; display: inline-flex; gap: 8px; align-items: center; }
+  .controls label, .radius-row label { color: var(--muted); font-size: 0.9rem; display: inline-flex; gap: 8px; align-items: center; }
+  .radius-row { margin-bottom: 14px; }
+  select:disabled { opacity: 0.5; }
   select {
     font: inherit; background: var(--panel); color: var(--text);
     border: 2px solid var(--line); border-radius: 8px; padding: 6px 10px;
@@ -162,7 +164,22 @@
 <body>
 <main>
   <h1>Spin for dinner</h1>
-  <p class="lede">Finds restaurants and fast food within 10 miles of you, then lets the wheel decide.</p>
+  <p class="lede">Finds restaurants and fast food within <span id="lede-radius">10 miles</span> of you, then lets the wheel decide.</p>
+
+  <div class="radius-row">
+    <label for="radius">Search radius
+      <select id="radius">
+        <option value="1">1 mile</option>
+        <option value="2">2 miles</option>
+        <option value="3">3 miles</option>
+        <option value="5">5 miles</option>
+        <option value="10" selected>10 miles</option>
+        <option value="15">15 miles</option>
+        <option value="20">20 miles</option>
+        <option value="25">25 miles</option>
+      </select>
+    </label>
+  </div>
 
   <div id="status" class="status" role="status" aria-live="polite">Waiting to find your location.</div>
 
@@ -212,8 +229,9 @@
 
 <script>
 (() => {
-  const RADIUS_MILES = 10;
-  const RADIUS_METERS = Math.round(RADIUS_MILES * 1609.344);
+  const RADIUS_OPTIONS = [1, 2, 3, 5, 10, 15, 20, 25];
+  const DEFAULT_RADIUS = 10;
+  const miLabel = (n) => n + (n === 1 ? " mile" : " miles");
   const COLORS = ["#e4572e", "#f6c343", "#6fc3a5", "#5aa9d6", "#f28c52"];
   const ENDPOINTS = [
     "https://overpass-api.de/api/interpreter",
@@ -227,6 +245,12 @@
   const spinBtn = $("spin");
 
   let origin = null;
+  let radiusMiles = DEFAULT_RADIUS;
+  try {
+    const saved = parseInt(localStorage.getItem("dinnerWheelRadius"), 10);
+    if (RADIUS_OPTIONS.includes(saved)) radiusMiles = saved;
+  } catch (e) { /* storage unavailable; use default */ }
+  let fetchToken = 0;
   let places = [];          // all named places found
   let excluded = new Set(); // ids removed via "Not this one"
   let filter = "all";
@@ -279,11 +303,18 @@
   }
 
   /* ---------- data ---------- */
+  function hideResults() {
+    places = []; pool = [];
+    controls.hidden = true; stage.hidden = true; listSection.hidden = true; resultEl.hidden = true;
+  }
+
   async function fetchPlaces() {
-    setStatus("Searching within " + RADIUS_MILES + " miles…");
+    const token = ++fetchToken;
+    const radius = radiusMiles;
+    setStatus("Searching within " + miLabel(radius) + "…");
     const { lat, lon } = origin;
-    const around = `(around:${RADIUS_METERS},${lat},${lon})`;
-    const query = `[out:json][timeout:25];(` +
+    const around = `(around:${Math.round(radius * 1609.344)},${lat},${lon})`;
+    const query = `[out:json][timeout:${radius > 10 ? 60 : 25}];(` +
       `node["amenity"~"^(restaurant|fast_food)$"]${around};` +
       `way["amenity"~"^(restaurant|fast_food)$"]${around};` +
       `);out center tags;`;
@@ -301,8 +332,11 @@
         break;
       } catch (e) { lastErr = e; }
     }
+    if (token !== fetchToken) return;   // radius changed while loading; a newer search is running
     if (!data) {
-      setStatus("Couldn't load nearby places (" + (lastErr ? lastErr.message : "network error") + "). Check your connection and try again.", true, "Try again", fetchPlaces);
+      hideResults();
+      setStatus("Couldn't load nearby places (" + (lastErr ? lastErr.message : "network error") + "). Check your connection" +
+        (radius > 10 ? ", or try a smaller radius" : "") + ", then try again.", true, "Try again", fetchPlaces);
       return;
     }
 
@@ -318,7 +352,7 @@
       if (seen.has(key)) continue;
       seen.add(key);
       const miles = haversineMiles(lat, lon, plat, plon);
-      if (miles > RADIUS_MILES) continue;
+      if (miles > radius) continue;
       places.push({
         id: el.type + el.id,
         name: tags.name,
@@ -330,10 +364,11 @@
     places.sort((a, b) => a.miles - b.miles);
 
     if (!places.length) {
-      setStatus("No named restaurants found within " + RADIUS_MILES + " miles. Map data may be sparse in this area.", true, "Search again", fetchPlaces);
+      hideResults();
+      setStatus("No named restaurants found within " + miLabel(radius) + ". Try a larger radius, or note that map data may be sparse in this area.", true, "Search again", fetchPlaces);
       return;
     }
-    setStatus("Found " + places.length + " places within " + RADIUS_MILES + " miles of you.");
+    setStatus("Found " + places.length + " places within " + miLabel(radius) + " of you.");
     controls.hidden = false; stage.hidden = false; listSection.hidden = false;
     buildPool();
     renderList();
@@ -447,6 +482,7 @@
     if (spinning || pool.length < 2) return;
     spinning = true;
     spinBtn.disabled = true;
+    $("radius").disabled = true;
     resultEl.hidden = true;
 
     const extraTurns = 5 + Math.floor(Math.random() * 3);
@@ -468,6 +504,7 @@
 
   function finish() {
     spinning = false;
+    $("radius").disabled = false;
     spinBtn.disabled = pool.length < 2;
     const n = pool.length, a = (Math.PI * 2) / n, TWO = Math.PI * 2;
     // pointer sits at the top (-90deg); find which slice covers that angle
@@ -513,6 +550,19 @@
         b.setAttribute("aria-pressed", String(b === btn)));
       buildPool();
     });
+  });
+  const radiusSel = $("radius");
+  const ledeRadius = $("lede-radius");
+  radiusSel.value = String(radiusMiles);
+  ledeRadius.textContent = miLabel(radiusMiles);
+  radiusSel.addEventListener("change", () => {
+    if (spinning) { radiusSel.value = String(radiusMiles); return; }
+    radiusMiles = parseInt(radiusSel.value, 10);
+    ledeRadius.textContent = miLabel(radiusMiles);
+    try { localStorage.setItem("dinnerWheelRadius", String(radiusMiles)); } catch (e) {}
+    excluded = new Set();
+    resultEl.hidden = true;
+    if (origin) fetchPlaces();       // reuse the known location; no new GPS lookup
   });
   $("relocate").addEventListener("click", () => {
     if (spinning) return;
