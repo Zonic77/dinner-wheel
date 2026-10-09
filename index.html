@@ -194,7 +194,7 @@
     <h2 id="r-name"></h2>
     <p id="r-meta"></p>
     <div class="row">
-      <a id="r-dir" target="_blank" rel="noopener">Get directions</a>
+      <a id="r-dir" rel="noopener">Get directions</a>
       <button type="button" class="ghost" id="r-skip">Not this one</button>
     </div>
   </section>
@@ -476,11 +476,26 @@
     showResult(winner);
   }
 
+  const isApple = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+  function directionsFor(p) {
+    const dir = $("r-dir");
+    if (isApple) {
+      // maps:// opens the Apple Maps app directly, even from a Home Screen web app
+      dir.href = "maps://?daddr=" + p.lat + "," + p.lon + "&dirflg=d&q=" + encodeURIComponent(p.name);
+      dir.removeAttribute("target");
+    } else {
+      dir.href = "https://www.google.com/maps/dir/?api=1&destination=" + p.lat + "," + p.lon;
+      dir.target = "_blank";
+    }
+  }
+
   function showResult(p) {
     $("r-name").textContent = p.name;
     const kind = p.type === "fast_food" ? "Fast food" : "Restaurant";
     $("r-meta").textContent = kind + (p.cuisine ? " · " + p.cuisine : "") + " · " + p.miles.toFixed(1) + " miles away";
-    $("r-dir").href = "https://www.google.com/maps/dir/?api=1&destination=" + p.lat + "," + p.lon;
+    directionsFor(p);
     $("r-skip").onclick = () => { excluded.add(p.id); buildPool(); };
     resultEl.hidden = false;
     resultEl.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "nearest" });
