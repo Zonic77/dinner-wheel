@@ -393,10 +393,16 @@
   const RADIUS_OPTIONS = [1, 2, 3, 5, 10, 15, 20, 25];
   const DEFAULT_RADIUS = 10;
   const COLORS = ["#e4572e", "#f6c343", "#6fc3a5", "#5aa9d6", "#f28c52"];
+  // Public Overpass servers. They are free but often busy, so we try several.
   const ENDPOINTS = [
     "https://overpass-api.de/api/interpreter",
-    "https://overpass.kumi.systems/api/interpreter"
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass.private.coffee/api/interpreter"
   ];
+  const CACHE_FRESH_MS = 30 * 60 * 1000;          // reuse a saved search for 30 minutes
+  const CACHE_STALE_MS = 7 * 24 * 60 * 60 * 1000; // fall back to a saved search for up to 7 days
+  const KEEP_TAGS = ["name", "amenity", "cuisine", "opening_hours", "phone", "contact:phone", "website",
+    "contact:website", "url", "addr:housenumber", "addr:street", "addr:city", "diet:vegan", "diet:vegetarian"];
   const LIST_LIMIT = 40;
   const TWO = Math.PI * 2;
 
@@ -785,6 +791,7 @@
   function refreshSearch() {
     if (!origin) return;
     sessionSkip.clear();
+    forceRefresh = true;
     if (origin.mode === "gps") locate(); else fetchPlaces();
   }
 
@@ -844,45 +851,154 @@
     $("wheel-note").textContent = "";
   }
 
+  /* ---- robust Overpass access: several servers, timeouts, retry, saved results ---- */
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  let forceRefresh = false;
+  const retryFetch = () => { forceRefresh = true; fetchPlaces(); };
+
+  function describeFetchError(e) {
+    if (navigator.onLine === false) return { full: "You appear to be offline.", why: "you appear to be offline" };
+    if (e && (e.status === 429 || e.status >= 500)) return { full: "The map service is busy right now.", why: "the map service is busy" };
+    if (e && e.name === "AbortError") return { full: "The map service took too long to respond.", why: "the map service took too long to respond" };
+    return { full: "Couldn't reach the map service.", why: "the map service couldn't be reached" };
+  }
+
+  // Starts server #1 right away, adds #2 and #3 if earlier ones are slow (4s apart) or fail,
+  // and uses whichever answers first.
+  function hedgedFetch(urls, timeoutMs) {
+    return new Promise((resolve, reject) => {
+      const ctls = [], timers = [];
+      let done = false, failed = 0, lastErr = null;
+      const finish = (fn, v) => {
+        if (done) return;
+        done = true;
+        timers.forEach(clearTimeout);
+        ctls.forEach((c) => { try { c.abort(); } catch (e) { /* ignore */ } });
+        fn(v);
+      };
+      const start = (i) => {
+        if (done || i >= urls.length || ctls[i]) return;
+        const ctl = new AbortController();
+        ctls[i] = ctl;
+        const to = setTimeout(() => ctl.abort(), timeoutMs);
+        fetch(urls[i], { signal: ctl.signal })
+          .then(async (r) => {
+            if (!r.ok) { const e = new Error("HTTP " + r.status); e.status = r.status; throw e; }
+            const j = await r.json();
+            if (!j || !Array.isArray(j.elements)) throw new Error("Unexpected response");
+            if (j.remark && !j.elements.length) throw new Error("Server: " + String(j.remark).slice(0, 60));
+            return j;
+          })
+          .then((j) => { clearTimeout(to); finish(resolve, j); })
+          .catch((e) => {
+            clearTimeout(to);
+            if (done) return;
+            lastErr = e;
+            failed++;
+            if (failed >= urls.length) finish(reject, lastErr); else start(i + 1);
+          });
+      };
+      start(0);
+      for (let i = 1; i < urls.length; i++) timers.push(setTimeout(() => start(i), i * 4000));
+    });
+  }
+
+  async function overpassElements(query, radius, token) {
+    const urls = ENDPOINTS.map((u) => u + "?data=" + encodeURIComponent(query));
+    const timeoutMs = radius > 10 ? 45000 : 25000;
+    let lastErr = null;
+    for (let round = 0; round < 2; round++) {
+      if (token !== fetchToken) throw new Error("cancelled");
+      try { return (await hedgedFetch(urls, timeoutMs)).elements; }
+      catch (e) {
+        lastErr = e;
+        if (round === 0) {
+          setStatus(navigator.onLine === false ? "You appear to be offline. Waiting to retry…" : "The map service is busy. Retrying…");
+          await sleep(1500);
+        }
+      }
+    }
+    throw lastErr;
+  }
+
+  // Saved search: lets radius changes and quick reopenings skip the network entirely,
+  // and gives us something to show when the servers are down.
+  function readCache() { return store.get("dw.cache", null); }
+  function cacheApplies(c, lat, lon, radius, maxAge) {
+    return c && Array.isArray(c.els) && Date.now() - c.t < maxAge && c.radius >= radius &&
+      haversineMiles(c.lat, c.lon, lat, lon) < 0.1;
+  }
+  function writeCache(lat, lon, radius, elements) {
+    const slim = [];
+    for (const e of elements) {
+      const tags = e.tags || {};
+      if (!tags.name) continue;
+      const plat = e.lat ?? (e.center && e.center.lat), plon = e.lon ?? (e.center && e.center.lon);
+      if (plat == null || plon == null) continue;
+      const t = {};
+      for (const k of KEEP_TAGS) if (tags[k] !== undefined) t[k] = tags[k];
+      slim.push({ type: e.type, id: e.id, lat: plat, lon: plon, tags: t });
+    }
+    const payload = { lat, lon, radius, t: Date.now(), els: slim };
+    try {
+      const str = JSON.stringify(payload);
+      if (str.length < 2500000) localStorage.setItem("dw.cache", str);
+    } catch (e) { /* storage full or unavailable */ }
+  }
+  const ageText = (t) => {
+    const m = Math.round((Date.now() - t) / 60000);
+    if (m < 60) return Math.max(m, 1) + " minute" + (m === 1 ? "" : "s") + " ago";
+    const h = Math.round(m / 60);
+    if (h < 48) return h + " hour" + (h === 1 ? "" : "s") + " ago";
+    return Math.round(h / 24) + " days ago";
+  };
+
   async function fetchPlaces() {
     if (!origin) return;
+    const force = forceRefresh; forceRefresh = false;
     const token = ++fetchToken;
     const radius = radiusMiles;
-    setStatus("Searching within " + miLabel(radius) + "…");
     const { lat, lon } = origin;
-    const around = `(around:${Math.round(radius * 1609.344)},${lat},${lon})`;
-    const query = `[out:json][timeout:${radius > 10 ? 60 : 25}];(` +
-      `node["amenity"~"^(restaurant|fast_food)$"]${around};` +
-      `way["amenity"~"^(restaurant|fast_food)$"]${around};` +
-      `);out center tags;`;
-
-    let data = null, lastErr = null;
-    for (const url of ENDPOINTS) {
-      try {
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: "data=" + encodeURIComponent(query)
-        });
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        data = await res.json();
-        break;
-      } catch (e) { lastErr = e; }
-    }
-    if (token !== fetchToken) return;       // a newer search replaced this one
     const where = origin.mode === "gps" ? "you" : origin.label;
     const changeAction = { label: "Change location", fn: () => showLocPanel("", true) };
-    if (!data) {
-      hideResults();
-      setStatus("Couldn't load nearby places (" + (lastErr ? lastErr.message : "network error") + "). Check your connection" +
-        (radius > 10 ? ", or try a smaller radius" : "") + ", then try again.", true,
-        [{ label: "Try again", fn: fetchPlaces }, changeAction]);
-      return;
+
+    let elements = null, notice = "";
+    const cached = readCache();
+    if (!force && cacheApplies(cached, lat, lon, radius, CACHE_FRESH_MS)) {
+      elements = cached.els;                       // recent search for this spot: no network needed
+    } else {
+      setStatus("Searching within " + miLabel(radius) + "…");
+      const slow = setTimeout(() => {
+        if (token === fetchToken) setStatus("Still searching… the map service is slow right now.");
+      }, 8000);
+      const around = `(around:${Math.round(radius * 1609.344)},${lat},${lon})`;
+      const query = `[out:json][timeout:${radius > 10 ? 60 : 25}];` +
+        `nwr["amenity"~"^(restaurant|fast_food)$"]["name"]${around};out center tags;`;
+      try {
+        elements = await overpassElements(query, radius, token);
+        writeCache(lat, lon, radius, elements);
+      } catch (e) {
+        clearTimeout(slow);
+        if (token !== fetchToken) return;
+        const stale = readCache();
+        if (cacheApplies(stale, lat, lon, radius, CACHE_STALE_MS)) {
+          elements = stale.els;
+          notice = " Showing results saved " + ageText(stale.t) + ", because " + describeFetchError(e).why + ".";
+        } else {
+          hideResults();
+          setStatus(describeFetchError(e).full + " We tried " + ENDPOINTS.length + " servers. " +
+            (radius > 10 ? "A smaller radius loads faster. " : "") + "Wait a moment and try again.", true,
+            [{ label: "Try again", fn: retryFetch }, changeAction]);
+          return;
+        }
+      }
+      clearTimeout(slow);
     }
+    if (token !== fetchToken) return;               // a newer search replaced this one
 
     // One entry per unique name: keep only the location closest to the search point.
     const closest = new Map();
-    for (const e of data.elements) {
+    for (const e of elements) {
       const tags = e.tags || {};
       if (!tags.name) continue;
       const plat = e.lat ?? (e.center && e.center.lat);
@@ -902,12 +1018,13 @@
     if (!places.length) {
       hideResults();
       setStatus("No named restaurants found within " + miLabel(radius) + " of " + where + ". Try a larger radius. Map data may be sparse in this area.", true,
-        [{ label: "Search again", fn: fetchPlaces }, changeAction]);
+        [{ label: "Search again", fn: retryFetch }, changeAction]);
       return;
     }
     let msg = "Found " + places.length + " place" + (places.length === 1 ? "" : "s") + " within " + miLabel(radius) + " of " + where + ".";
     if (places.length < 8) msg += " That's a small list. Map data may be incomplete here, so a larger radius could help.";
-    setStatus(msg, false, [changeAction, { label: "Refresh", fn: refreshSearch }]);
+    msg += notice;
+    setStatus(msg, false, [changeAction, { label: notice ? "Try again" : "Refresh", fn: notice ? retryFetch : refreshSearch }]);
     controls.hidden = false; stage.hidden = false; listSection.hidden = false; moreEl.hidden = false;
     updateHiddenUI();
     refreshAll();
