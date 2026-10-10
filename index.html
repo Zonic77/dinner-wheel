@@ -54,9 +54,7 @@
     -webkit-user-select: none;
     user-select: none;
   }
-  ul.places, .result { -webkit-user-select: text; user-select: text; }
-  button, .seg button { touch-action: manipulation; min-height: 44px; }
-  select { font-size: 16px; min-height: 44px; } /* 16px stops iOS from zooming on focus */
+  ul.places, .result, input { -webkit-user-select: text; user-select: text; }
   main { max-width: 760px; margin: 0 auto; }
   h1 {
     font-size: clamp(2.2rem, 7vw, 3.6rem);
@@ -65,7 +63,64 @@
     letter-spacing: -0.03em;
     margin: 12px 0 8px;
   }
-  .lede { color: var(--muted); margin: 0 0 20px; max-width: 46ch; }
+  .lede { color: var(--muted); margin: 0 0 18px; max-width: 46ch; }
+
+  /* ---------- buttons ---------- */
+  button {
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 999px;
+    border: 2px solid var(--yellow);
+    background: var(--yellow);
+    color: var(--ink);
+    padding: 10px 20px;
+    touch-action: manipulation;
+    min-height: 44px;
+  }
+  button.ghost { background: transparent; color: var(--text); border-color: var(--line); }
+  button.small { min-height: 36px; padding: 6px 14px; font-size: 0.9rem; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible, summary:focus-visible {
+    outline: 3px solid var(--sky);
+    outline-offset: 2px;
+  }
+
+  /* ---------- location panel ---------- */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 18px;
+  }
+  .panel[hidden] { display: none; }
+  .panel h2 { margin: 0 0 6px; font-size: 1.35rem; letter-spacing: -0.01em; }
+  .panel p { margin: 0 0 14px; color: var(--muted); font-size: 0.95rem; }
+  .panel .or { text-align: center; color: var(--muted); margin: 12px 0; font-size: 0.85rem; }
+  .loc-form { display: flex; gap: 8px; }
+  input[type="search"], input[type="text"] {
+    font: inherit; font-size: 16px; /* 16px stops iOS from zooming on focus */
+    flex: 1; min-width: 0; min-height: 44px;
+    background: var(--bg); color: var(--text);
+    border: 2px solid var(--line); border-radius: 999px; padding: 8px 16px;
+  }
+  .loc-msg { margin: 12px 0 0; color: var(--text); font-size: 0.92rem; }
+  .loc-msg:empty { display: none; }
+  .loc-results { display: grid; gap: 8px; margin-top: 10px; }
+  .loc-results:empty { display: none; }
+  .loc-results button { text-align: left; border-radius: 12px; background: transparent; color: var(--text); border-color: var(--line); font-weight: 400; }
+  .panel .cancel { margin-top: 12px; }
+
+  /* ---------- radius + status ---------- */
+  .radius-row { margin-bottom: 14px; }
+  .controls label, .radius-row label, .more label { color: var(--muted); font-size: 0.9rem; display: inline-flex; gap: 8px; align-items: center; }
+  select {
+    font: inherit; font-size: 16px; min-height: 44px;
+    background: var(--panel); color: var(--text);
+    border: 2px solid var(--line); border-radius: 8px; padding: 6px 10px;
+  }
+  select:disabled { opacity: 0.5; }
 
   .status {
     background: var(--panel);
@@ -76,42 +131,33 @@
     font-size: 0.95rem;
   }
   .status.error { border-color: var(--tomato); }
-  .status button { margin-top: 10px; }
+  .status .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 
-  button {
-    font: inherit;
-    font-weight: 600;
-    cursor: pointer;
-    border-radius: 999px;
-    border: 2px solid var(--yellow);
-    background: var(--yellow);
-    color: var(--ink);
-    padding: 10px 20px;
-  }
-  button.ghost { background: transparent; color: var(--text); border-color: var(--line); }
-  button:disabled { opacity: 0.5; cursor: not-allowed; }
-  button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible {
-    outline: 3px solid var(--sky);
-    outline-offset: 2px;
-  }
-
-  .controls { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-bottom: 18px; }
+  /* ---------- controls + chips ---------- */
+  .controls { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-bottom: 12px; }
   .seg { display: inline-flex; border: 2px solid var(--line); border-radius: 999px; overflow: hidden; }
-  .seg button {
-    border: 0; border-radius: 0; background: transparent; color: var(--muted);
-    padding: 8px 16px;
-  }
+  .seg button { border: 0; border-radius: 0; background: transparent; color: var(--muted); padding: 8px 16px; }
   .seg button[aria-pressed="true"] { background: var(--mint); color: var(--ink); }
-  .controls label, .radius-row label { color: var(--muted); font-size: 0.9rem; display: inline-flex; gap: 8px; align-items: center; }
-  .radius-row { margin-bottom: 14px; }
-  select:disabled { opacity: 0.5; }
-  select {
-    font: inherit; background: var(--panel); color: var(--text);
-    border: 2px solid var(--line); border-radius: 8px; padding: 6px 10px;
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .chips[hidden], .controls[hidden] { display: none; }
+  .chip {
+    background: transparent; color: var(--text); border: 2px solid var(--line);
+    padding: 6px 14px; min-height: 40px; font-weight: 600; font-size: 0.9rem;
   }
+  .chip[aria-pressed="true"] { background: var(--mint); border-color: var(--mint); color: var(--ink); }
+  .chip[data-chip="clear"] { color: var(--muted); border-style: dashed; }
 
-  .stage { position: relative; width: min(100%, 520px); aspect-ratio: 1; margin: 0 auto 18px; }
-  canvas { width: 100%; height: 100%; display: block; }
+  details.more { margin-bottom: 18px; border: 1px solid var(--line); border-radius: 12px; padding: 0 14px; }
+  details.more[hidden] { display: none; }
+  details.more summary { cursor: pointer; padding: 12px 0; font-weight: 600; min-height: 44px; }
+  details.more .opts { display: grid; gap: 12px; padding: 0 0 14px; }
+  details.more .opt-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; color: var(--muted); font-size: 0.9rem; }
+  details.more input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--mint); }
+
+  /* ---------- wheel ---------- */
+  .stage { position: relative; width: min(100%, 520px); aspect-ratio: 1; margin: 0 auto 8px; }
+  .stage[hidden] { display: none; }
+  canvas#wheel { width: 100%; height: 100%; display: block; }
   .pointer {
     position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
     width: 0; height: 0;
@@ -125,46 +171,106 @@
     width: 22%; aspect-ratio: 1; border-radius: 50%;
     font-size: clamp(1rem, 3.6vw, 1.4rem); font-weight: 800;
     background: var(--yellow); color: var(--ink); border: 5px solid var(--bg);
-    padding: 0;
-    z-index: 3;
+    padding: 0; z-index: 3;
   }
+  .note { text-align: center; color: var(--muted); font-size: 0.88rem; margin: 0 0 18px; min-height: 1.3em; }
+  .note:empty { display: none; }
 
+  /* ---------- result card ---------- */
   .result {
     background: var(--yellow); color: var(--ink);
-    border-radius: 14px; padding: 18px 20px; margin-bottom: 28px;
+    border-radius: 16px; padding: 18px 20px 20px; margin-bottom: 28px;
   }
   .result[hidden] { display: none; }
-  .result h2 { margin: 0 0 4px; font-size: clamp(1.6rem, 5vw, 2.2rem); line-height: 1.05; letter-spacing: -0.02em; }
-  .result p { margin: 0 0 14px; }
-  .result .row { display: flex; flex-wrap: wrap; gap: 10px; }
-  .result a, .result button {
-    text-decoration: none; font-weight: 600; font-size: 0.95rem;
-    padding: 9px 16px; border-radius: 999px; border: 2px solid var(--ink);
-    background: var(--ink); color: var(--text);
+  .result.pop { animation: pop 0.35s ease-out; }
+  @keyframes pop { from { transform: scale(0.96); opacity: 0.4; } to { transform: scale(1); opacity: 1; } }
+  .result .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .result .eyebrow { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.75; }
+  .result h2 { margin: 2px 0 4px; font-size: clamp(1.6rem, 5vw, 2.2rem); line-height: 1.05; letter-spacing: -0.02em; }
+  .result p { margin: 0 0 8px; }
+  .result .addr { font-size: 0.92rem; opacity: 0.85; }
+  .badge { display: inline-flex; align-items: center; gap: 7px; font-weight: 700; font-size: 0.92rem; }
+  .badge::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: currentColor; flex: none; }
+  .result .badge.open { color: #0b6b45; }
+  .result .badge.soon { color: #8a4b00; }
+  .result .badge.closed { color: #a3231a; }
+  .result .badge.unknown { color: rgba(15,42,51,0.65); }
+  .result .row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+  .result a.btn, .result button.btn {
+    display: inline-flex; align-items: center; justify-content: center; text-decoration: none;
+    font-weight: 600; font-size: 0.95rem; min-height: 44px; padding: 9px 18px;
+    border-radius: 999px; border: 2px solid var(--ink); background: var(--ink); color: var(--text);
   }
-  .result button.ghost { background: transparent; color: var(--ink); border-color: var(--ink); }
+  .result .btn.outline { background: transparent; color: var(--ink); }
+  .result .btn[hidden] { display: none; }
+  .result .btn.icon { min-width: 44px; padding: 6px 12px; font-size: 1.3rem; line-height: 1; }
+  .result .btn.icon[aria-pressed="true"] { background: var(--ink); color: #ff8a73; }
+  .result .btn.icon[aria-pressed="false"] { background: transparent; color: var(--ink); }
 
-  .list-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-  h3 { font-size: 1.2rem; margin: 0 0 8px; }
+  /* ---------- list ---------- */
+  .list-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+  .list-head h3, .recent h3 { font-size: 1.2rem; margin: 0; }
+  .list-tools { display: flex; gap: 10px; align-items: center; }
   .count { color: var(--muted); font-size: 0.9rem; }
-  ul.places { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
-  ul.places li {
-    display: flex; justify-content: space-between; gap: 12px;
-    padding: 10px 2px; border-bottom: 1px solid var(--line);
+  ul.places, ul.recent-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+  ul.places li, ul.recent-list li { border-bottom: 1px solid var(--line); }
+  button.place {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    width: 100%; text-align: left; background: none; border: 0; border-radius: 0;
+    color: var(--text); font-weight: 400; padding: 12px 2px; min-height: 56px;
   }
-  ul.places .name { font-weight: 600; }
-  ul.places .meta { color: var(--muted); font-size: 0.88rem; }
-  ul.places .dist { color: var(--mint); font-weight: 600; white-space: nowrap; }
+  button.place:hover { background: rgba(255,255,255,0.04); }
+  .place .name { font-weight: 600; }
+  .place .heart { color: #ff8a73; margin-left: 6px; }
+  .place .meta { color: var(--muted); font-size: 0.88rem; }
+  .place .right { text-align: right; white-space: nowrap; }
+  .place .dist { color: var(--mint); font-weight: 600; }
+  .st { font-size: 0.8rem; font-weight: 600; }
+  .st.open { color: var(--mint); }
+  .st.soon { color: var(--yellow); }
+  .st.closed { color: #ff8a73; }
+  .show-all { margin: 14px auto 0; display: block; }
+  .recent { margin-top: 28px; }
+  .recent .list-head { margin-bottom: 8px; }
+  ul.recent-list li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 2px; }
+  ul.recent-list .when { color: var(--muted); font-size: 0.88rem; }
+
   footer { color: var(--muted); font-size: 0.8rem; margin-top: 28px; }
   footer a { color: var(--muted); }
 
-  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+  #confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
+  .toast {
+    position: fixed; left: 50%; bottom: max(24px, calc(env(safe-area-inset-bottom, 0px) + 12px));
+    transform: translateX(-50%); background: var(--text); color: var(--ink);
+    padding: 10px 18px; border-radius: 999px; font-weight: 600; font-size: 0.92rem;
+    z-index: 60; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .toast.show { opacity: 1; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { scroll-behavior: auto !important; }
+    .result.pop { animation: none; }
+  }
 </style>
 </head>
 <body>
 <main>
   <h1>Spin for dinner</h1>
-  <p class="lede">Finds restaurants and fast food within <span id="lede-radius">10 miles</span> of you, then lets the wheel decide.</p>
+  <p class="lede">Finds restaurants and fast food within <span id="lede-radius">10 miles</span> of <span id="lede-where">you</span>, then lets the wheel decide.</p>
+
+  <section class="panel" id="loc-panel" hidden aria-labelledby="loc-title">
+    <h2 id="loc-title">Where should we look?</h2>
+    <p>Share your location to find places nearby, or search for a city, ZIP code, or address. Your coordinates are sent to OpenStreetMap's public search service to find restaurants, and the app doesn't keep them on any server.</p>
+    <button type="button" id="use-gps">Use my location</button>
+    <div class="or">or</div>
+    <form class="loc-form" id="loc-form" role="search">
+      <input type="search" id="loc-q" placeholder="City, ZIP code, or address" aria-label="City, ZIP code, or address" enterkeyhint="search" autocomplete="off" autocapitalize="words">
+      <button type="submit" class="ghost" id="loc-go">Search</button>
+    </form>
+    <div class="loc-results" id="loc-results"></div>
+    <p class="loc-msg" id="loc-msg" role="status"></p>
+    <button type="button" class="ghost small cancel" id="loc-cancel" hidden>Cancel</button>
+  </section>
 
   <div class="radius-row">
     <label for="radius">Search radius
@@ -181,7 +287,7 @@
     </label>
   </div>
 
-  <div id="status" class="status" role="status" aria-live="polite">Waiting to find your location.</div>
+  <div id="status" class="status" role="status" aria-live="polite" hidden></div>
 
   <div class="controls" id="controls" hidden>
     <div class="seg" role="group" aria-label="Place type">
@@ -189,126 +295,557 @@
       <button type="button" data-filter="restaurant" aria-pressed="false">Restaurants</button>
       <button type="button" data-filter="fast_food" aria-pressed="false">Fast food</button>
     </div>
-    <label>Slices on wheel
-      <select id="slices">
-        <option value="8">8</option>
-        <option value="12" selected>12</option>
-        <option value="16">16</option>
-        <option value="24">24</option>
-      </select>
-    </label>
-    <button type="button" class="ghost" id="reshuffle">Shuffle wheel</button>
-    <button type="button" class="ghost" id="relocate">Update location</button>
+    <button type="button" class="ghost small" id="reshuffle">Shuffle wheel</button>
   </div>
+
+  <div class="chips" id="chips" role="group" aria-label="Filters" hidden></div>
+
+  <details class="more" id="more" hidden>
+    <summary>More options</summary>
+    <div class="opts">
+      <div class="opt-row">
+        <label for="slices">Slices on wheel
+          <select id="slices">
+            <option value="8">8</option>
+            <option value="12" selected>12</option>
+            <option value="16">16</option>
+            <option value="24">24</option>
+          </select>
+        </label>
+      </div>
+      <div class="opt-row"><label><input type="checkbox" id="opt-unknown"> Keep places with unknown hours when "Open now" is on</label></div>
+      <div class="opt-row"><label><input type="checkbox" id="opt-recent"> Skip places I've picked in the last 7 days</label></div>
+      <div class="opt-row"><label><input type="checkbox" id="opt-sound"> Sound effects</label></div>
+      <div class="opt-row">
+        <span id="hidden-count">0 hidden places</span>
+        <button type="button" class="ghost small" id="reset-hidden">Reset hidden places</button>
+      </div>
+    </div>
+  </details>
 
   <div class="stage" id="stage" hidden>
     <div class="pointer" aria-hidden="true"></div>
     <canvas id="wheel" role="img" aria-label="Restaurant wheel"></canvas>
     <button type="button" class="hub" id="spin">Spin</button>
   </div>
+  <p class="note" id="wheel-note"></p>
 
   <section class="result" id="result" hidden aria-live="polite">
+    <div class="top">
+      <span class="eyebrow" id="r-eyebrow">Tonight's pick</span>
+      <button type="button" class="btn icon" id="r-fav" aria-pressed="false" aria-label="Save to favorites">♥</button>
+    </div>
     <h2 id="r-name"></h2>
     <p id="r-meta"></p>
+    <p><span class="badge unknown" id="r-status"></span></p>
+    <p class="addr" id="r-addr"></p>
     <div class="row">
-      <a id="r-dir" rel="noopener">Get directions</a>
-      <button type="button" class="ghost" id="r-skip">Not this one</button>
+      <a class="btn" id="r-dir" rel="noopener">Get directions</a>
+      <button type="button" class="btn outline" id="r-again">Spin again</button>
+    </div>
+    <div class="row">
+      <a class="btn outline" id="r-call" hidden>Call</a>
+      <a class="btn outline" id="r-web" target="_blank" rel="noopener" hidden>Website</a>
+      <button type="button" class="btn outline" id="r-share">Share</button>
+    </div>
+    <div class="row">
+      <button type="button" class="btn outline" id="r-skip">Not this one</button>
+      <button type="button" class="btn outline" id="r-never">Don't show again</button>
     </div>
   </section>
 
   <section id="list-section" hidden>
     <div class="list-head">
       <h3>Everything nearby</h3>
-      <span class="count" id="count"></span>
+      <div class="list-tools">
+        <span class="count" id="count"></span>
+        <label for="sort" class="count">Sort
+          <select id="sort">
+            <option value="distance">Closest</option>
+            <option value="name">A to Z</option>
+          </select>
+        </label>
+      </div>
     </div>
     <ul class="places" id="places"></ul>
+    <button type="button" class="ghost small show-all" id="show-all" hidden>Show all</button>
   </section>
 
-  <footer>Place data from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors via the Overpass API. Coverage varies by area.</footer>
+  <section class="recent" id="recent-section" hidden>
+    <div class="list-head">
+      <h3>Recently picked</h3>
+      <button type="button" class="ghost small" id="clear-recent">Clear</button>
+    </div>
+    <ul class="recent-list" id="recent-list"></ul>
+  </section>
+
+  <footer>Place data from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors via the Overpass API. Location search by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> and OpenStreetMap Nominatim. Coverage, hours, and contact details vary by area and may be out of date.</footer>
 </main>
+
+<canvas id="confetti" aria-hidden="true"></canvas>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 (() => {
+  "use strict";
+
+  /* ================= constants & helpers ================= */
   const RADIUS_OPTIONS = [1, 2, 3, 5, 10, 15, 20, 25];
   const DEFAULT_RADIUS = 10;
-  const miLabel = (n) => n + (n === 1 ? " mile" : " miles");
   const COLORS = ["#e4572e", "#f6c343", "#6fc3a5", "#5aa9d6", "#f28c52"];
   const ENDPOINTS = [
     "https://overpass-api.de/api/interpreter",
     "https://overpass.kumi.systems/api/interpreter"
   ];
+  const LIST_LIMIT = 40;
+  const TWO = Math.PI * 2;
 
   const $ = (id) => document.getElementById(id);
-  const statusEl = $("status"), controls = $("controls"), stage = $("stage");
-  const resultEl = $("result"), listSection = $("list-section");
-  const canvas = $("wheel"), ctx = canvas.getContext("2d");
-  const spinBtn = $("spin");
-
-  let origin = null;
-  let radiusMiles = DEFAULT_RADIUS;
-  try {
-    const saved = parseInt(localStorage.getItem("dinnerWheelRadius"), 10);
-    if (RADIUS_OPTIONS.includes(saved)) radiusMiles = saved;
-  } catch (e) { /* storage unavailable; use default */ }
-  let fetchToken = 0;
-  let places = [];          // all named places found
-  let excluded = new Set(); // ids removed via "Not this one"
-  let filter = "all";
-  let pool = [];            // places currently on the wheel
-  let rotation = 0;         // radians
-  let spinning = false;
-
+  const miLabel = (n) => n + (n === 1 ? " mile" : " miles");
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  /* ---------- status helpers ---------- */
-  function setStatus(msg, isError, actionLabel, action) {
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  const store = {
+    get(k, d) {
+      try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); }
+      catch (e) { return d; }
+    },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } }
+  };
+
+  const nameKey = (n) => String(n).normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/[^a-z0-9]/g, "") || String(n).toLowerCase();
+
+  /* ================= opening hours ================= */
+  /* HOURS START */
+  const DAY_IDX = { Mo: 0, Tu: 1, We: 2, Th: 3, Fr: 4, Sa: 5, Su: 6 };
+  const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  function parseHM(t) {
+    const m = /^(\d{1,2}):(\d{2})$/.exec(t.trim());
+    if (!m) return null;
+    const h = +m[1], mi = +m[2];
+    if (h > 24 || mi > 59 || (h === 24 && mi > 0)) return null;
+    return h * 60 + mi;
+  }
+
+  function parseDays(sel) {
+    const days = new Set();
+    for (const part of sel.split(",")) {
+      const p = part.trim();
+      if (!p) return null;
+      const m = /^([A-Z][a-z])(?:\s*-\s*([A-Z][a-z]))?$/.exec(p);
+      if (!m) return null;
+      const a = DAY_IDX[m[1]], b = m[2] === undefined ? a : DAY_IDX[m[2]];
+      if (a === undefined || b === undefined) return null;
+      let d = a; days.add(d);
+      while (d !== b) { d = (d + 1) % 7; days.add(d); }
+    }
+    return days;
+  }
+
+  // Understands the common forms of OpenStreetMap "opening_hours".
+  // Returns { days: [7 arrays of [start,end] minutes], always: bool } or null if unsupported.
+  function parseHours(raw) {
+    if (!raw) return null;
+    const s = String(raw).trim();
+    if (/^24\/7$/.test(s)) return { days: Array.from({ length: 7 }, () => [[0, 1440]]), always: true };
+    if (/[\[\]"+]|\|\||sunrise|sunset|dawn|dusk|week|easter|\bSH\b|\bopen\b|appointment/i.test(s)) return null;
+    if (/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/.test(s)) return null;
+
+    const days = Array.from({ length: 7 }, () => []);
+    let any = false;
+    for (let seg of s.split(";")) {
+      seg = seg.trim();
+      if (!seg) continue;
+      seg = seg.replace(/,\s*PH\b/g, "").replace(/\bPH\s*,/g, "");
+      if (/\bPH\b/.test(seg)) continue;                       // holiday-only rule: ignore
+      seg = seg.replace(/(\d)\s*,\s*(?=[A-Z][a-z])/g, "$1\u0000"); // "Mo 10:00-12:00, Sa 09:00-12:00"
+      for (const sub of seg.split("\u0000")) {
+        const m = /^(.*?)\s*(off|closed|24\/7|\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2}(?:\s*,\s*\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2})*)\s*$/i.exec(sub.trim());
+        if (!m) return null;
+        const sel = m[1].trim().replace(/,+$/, "").trim();
+        const target = sel ? parseDays(sel) : new Set([0, 1, 2, 3, 4, 5, 6]);
+        if (!target) return null;
+        const body = m[2].toLowerCase();
+        let intervals;
+        if (body === "off" || body === "closed") intervals = [];
+        else if (body === "24/7") intervals = [[0, 1440]];
+        else {
+          intervals = [];
+          for (const range of body.split(",")) {
+            const [a, b] = range.split("-");
+            const st = parseHM(a), en = parseHM(b);
+            if (st === null || en === null) return null;
+            intervals.push([st, en <= st ? en + 1440 : en]);  // past midnight
+          }
+        }
+        for (const d of target) days[d] = intervals.slice();
+        any = true;
+      }
+    }
+    if (!any) return null;
+    const always = days.every((iv) => iv.some(([a, b]) => a === 0 && b >= 1440));
+    return { days, always };
+  }
+
+  function fmtTime(mins) {
+    mins = ((mins % 1440) + 1440) % 1440;
+    if (mins === 0) return "midnight";
+    if (mins === 720) return "noon";
+    const h = Math.floor(mins / 60), m = mins % 60;
+    return (h % 12 || 12) + (m ? ":" + String(m).padStart(2, "0") : "") + " " + (h >= 12 ? "PM" : "AM");
+  }
+
+  function nowInTZ(tz) {
+    let parts;
+    try {
+      parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: tz || undefined, weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23"
+      }).formatToParts(new Date());
+    } catch (e) {
+      parts = new Intl.DateTimeFormat("en-US", {
+        weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23"
+      }).formatToParts(new Date());
+    }
+    const get = (t) => parts.find((p) => p.type === t).value;
+    return { day: DAY_NAMES.indexOf(get("weekday")), min: (+get("hour") % 24) * 60 + (+get("minute")) };
+  }
+
+  // Pure function: parsed rules + "now" -> { state: open|closed|unknown, soon, text }
+  function evalHours(rules, now) {
+    if (!rules) return { state: "unknown", text: "Hours unknown" };
+    if (rules.always) return { state: "open", soon: false, text: "Open 24 hours" };
+    const { day, min } = now, days = rules.days;
+    let end = null;
+    for (const [s, e] of days[day]) if (min >= s && min < e) { end = e; break; }
+    if (end === null) {
+      const prev = (day + 6) % 7;
+      for (const [s, e] of days[prev]) if (e > 1440 && min + 1440 >= s && min + 1440 < e) { end = e - 1440; break; }
+    }
+    if (end !== null) {
+      const soon = end - min <= 45;
+      return { state: "open", soon, text: (soon ? "Closing soon · " : "Open until ") + fmtTime(end) };
+    }
+    for (let off = 0; off < 8; off++) {
+      const d = (day + off) % 7;
+      const starts = days[d].map((iv) => iv[0]).sort((a, b) => a - b);
+      for (const st of starts) {
+        if (off === 0 && st <= min) continue;
+        const when = off === 0 ? "" : off === 1 ? "tomorrow " : DAY_NAMES[d] + " ";
+        return { state: "closed", text: "Closed · opens " + when + fmtTime(st) };
+      }
+    }
+    return { state: "closed", text: "Closed" };
+  }
+  /* HOURS END */
+
+  /* ================= cuisines ================= */
+  /* CUISINE START */
+  const CUISINE_MAP = {
+    burger: "Burgers", burgers: "Burgers", hamburger: "Burgers",
+    pizza: "Pizza", mexican: "Mexican", tex_mex: "Mexican", taco: "Mexican", tacos: "Mexican", burrito: "Mexican",
+    chinese: "Chinese", sandwich: "Sandwiches", sandwiches: "Sandwiches", sub: "Sandwiches", deli: "Sandwiches",
+    coffee_shop: "Coffee", coffee: "Coffee", cafe: "Coffee",
+    chicken: "Chicken", fried_chicken: "Chicken", wings: "Chicken", chicken_wings: "Chicken",
+    american: "American", italian: "Italian", pasta: "Italian",
+    japanese: "Japanese", sushi: "Japanese", ramen: "Japanese", thai: "Thai", indian: "Indian",
+    seafood: "Seafood", fish: "Seafood", steak_house: "Steak", steak: "Steak",
+    barbecue: "BBQ", bbq: "BBQ", breakfast: "Breakfast", brunch: "Breakfast", pancake: "Breakfast",
+    ice_cream: "Dessert", dessert: "Dessert", donut: "Dessert", frozen_yogurt: "Dessert", bakery: "Bakery",
+    asian: "Asian", vietnamese: "Vietnamese", korean: "Korean", greek: "Greek", mediterranean: "Mediterranean",
+    cuban: "Cuban", latin_american: "Latin American", caribbean: "Caribbean", french: "French", spanish: "Spanish"
+  };
+  const NAME_CUISINE = [
+    [/mcdonald|burger king|wendy'?s|five guys|whataburger|sonic drive|culver|shake shack|in-n-out|hardee|carl'?s jr|jack in the box|checkers|rally'?s|krystal|smashburger|freddy'?s|fatburger|burger/i, "Burgers"],
+    [/pizza|domino|papa john|little caesar|papa murphy|marco'?s pizza|cici/i, "Pizza"],
+    [/\bkfc\b|kentucky fried|popeyes|chick-?fil-?a|wingstop|zaxby|bojangles|raising cane|church'?s chicken|wild wings|\bwings?\b/i, "Chicken"],
+    [/taco|chipotle|qdoba|moe'?s southwest|del taco|burrito|cantina|mexic/i, "Mexican"],
+    [/subway|jersey mike|jimmy john|firehouse subs|arby'?s|potbelly|which wich|quiznos|sandwich|\bdeli\b/i, "Sandwiches"],
+    [/starbucks|dunkin|tim hortons|dutch bros|coffee|espresso/i, "Coffee"],
+    [/dairy queen|baskin|cold stone|krispy kreme|ben & jerry|marble slab|ice cream|donut|doughnut|yogurt|smoothie/i, "Dessert"],
+    [/ihop|waffle house|denny'?s|breakfast|pancake|cracker barrel|bob evans/i, "Breakfast"],
+    [/panda express|china|chinese|\bwok\b/i, "Chinese"],
+    [/sushi|ramen|hibachi|teriyaki|japan/i, "Japanese"],
+    [/bbq|barbecue|barbeque|smokehouse/i, "BBQ"],
+    [/steak|texas roadhouse|outback|longhorn/i, "Steak"],
+    [/seafood|\bfish\b|oyster|crab|shrimp|red lobster/i, "Seafood"],
+    [/\bthai\b/i, "Thai"],
+    [/indian|tandoor|curry/i, "Indian"],
+    [/italian|olive garden|pasta|trattoria/i, "Italian"]
+  ];
+  function prettyCuisine(c) {
+    if (CUISINE_MAP[c]) return CUISINE_MAP[c];
+    return c.replace(/_/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
+  }
+  function inferCuisine(name) {
+    for (const [re, label] of NAME_CUISINE) if (re.test(name)) return label;
+    return null;
+  }
+  /* CUISINE END */
+
+  /* ================= elements & state ================= */
+  const statusEl = $("status"), controls = $("controls"), stage = $("stage");
+  const resultEl = $("result"), listSection = $("list-section"), chipsEl = $("chips");
+  const moreEl = $("more"), locPanel = $("loc-panel");
+  const canvas = $("wheel"), ctx = canvas.getContext("2d");
+  const spinBtn = $("spin"), radiusSel = $("radius");
+
+  let origin = null;            // { mode: "gps"|"manual", lat, lon, label?, tz? }
+  let hoursTz = null;           // time zone used to judge "open now"
+  let radiusMiles = DEFAULT_RADIUS;
+  {
+    const saved = parseInt(store.get("dinnerWheelRadius", DEFAULT_RADIUS), 10);
+    if (RADIUS_OPTIONS.includes(saved)) radiusMiles = saved;
+  }
+  const prefs = Object.assign({ slices: 12, unknownOk: true, skipRecent: false, sound: true }, store.get("dw.prefs", {}));
+  const savePrefs = () => store.set("dw.prefs", prefs);
+
+  let hidden = new Set(store.get("dw.hidden", []));     // "Don't show again" (remembered)
+  let favs = store.get("dw.favs", {});                  // key -> name
+  let recent = store.get("dw.recent", []);              // [{key,name,t}]
+  const sessionSkip = new Set();                        // "Not this one" (until search changes)
+
+  let places = [];
+  let pool = [];
+  let eligibleCount = 0;
+  let rotation = 0;
+  let winnerIdx = -1;
+  let spinning = false;
+  let current = null;           // place shown in the result card
+  let fetchToken = 0;
+  let showAll = false;
+  const filt = { type: "all", openNow: false, fav: false, veg: false, vegan: false, cuisines: new Set() };
+
+  /* ================= toast / status ================= */
+  let toastTimer = null;
+  function toast(msg) {
+    const t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+  }
+
+  function setStatus(msg, isError, actions) {
+    statusEl.hidden = false;
     statusEl.className = "status" + (isError ? " error" : "");
     statusEl.textContent = msg;
-    if (actionLabel) {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.textContent = actionLabel;
-      b.addEventListener("click", action);
-      statusEl.appendChild(document.createElement("br"));
-      statusEl.appendChild(b);
+    if (actions && actions.length) {
+      const row = el("div", "actions");
+      for (const a of actions) {
+        const b = el("button", "small ghost", a.label);
+        b.type = "button";
+        b.addEventListener("click", a.fn);
+        row.appendChild(b);
+      }
+      statusEl.appendChild(row);
     }
   }
 
-  /* ---------- location ---------- */
-  function locate() {
-    if (!("geolocation" in navigator)) {
-      setStatus("This browser can't share its location. Try a current version of Chrome, Safari, Edge, or Firefox.", true);
-      return;
-    }
+  /* ================= hours status helpers ================= */
+  let nowCache = { t: 0, v: null };
+  function getNow() {
+    if (!nowCache.v || Date.now() - nowCache.t > 20000) nowCache = { t: Date.now(), v: nowInTZ(hoursTz === "unknown" ? null : hoursTz) };
+    return nowCache.v;
+  }
+  function hoursStatus(p) {
+    if (!p.hoursRaw || hoursTz === "unknown") return { state: "unknown", text: "Hours unknown" };
+    if (p.rules === undefined) p.rules = parseHours(p.hoursRaw);
+    return evalHours(p.rules, getNow());
+  }
+
+  /* ================= location ================= */
+  function deviceTz() {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || null; } catch (e) { return null; }
+  }
+
+  function setOrigin(o) {
+    origin = o;
+    hoursTz = o.mode === "gps" ? (deviceTz() || "unknown") : (o.tz || "unknown");
+    nowCache = { t: 0, v: null };
+    $("lede-where").textContent = o.mode === "gps" ? "you" : o.label;
+  }
+
+  function showLocPanel(msg, allowCancel) {
+    locPanel.hidden = false;
+    $("loc-msg").textContent = msg || "";
+    $("loc-results").textContent = "";
+    $("loc-cancel").hidden = !allowCancel;
+    locPanel.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "nearest" });
+  }
+  function hideLocPanel() { locPanel.hidden = true; $("loc-msg").textContent = ""; $("loc-results").textContent = ""; }
+
+  function getPosition() {
+    return new Promise((resolve, reject) => {
+      if (!("geolocation" in navigator)) return reject({ code: 2 });
+      navigator.geolocation.getCurrentPosition(resolve, reject,
+        { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 });
+    });
+  }
+
+  async function locate() {
     setStatus("Finding your location…");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        origin = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-        fetchPlaces();
-      },
-      (err) => {
-        const msgs = {
-          1: "Location permission was denied. Allow location access for this page in your browser settings, then try again.",
-          2: "Your device couldn't determine its location. Check that location services are on, then try again.",
-          3: "Finding your location timed out. Try again."
-        };
-        let msg = msgs[err.code] || "Couldn't get your location.";
-        if (location.protocol === "file:") {
-          msg += " If you opened this file directly, some browsers block location on file:// pages. Serve it with a local server (for example, python3 -m http.server) and open http://localhost:8000.";
-        }
-        setStatus(msg, true, "Try again", locate);
-      },
-      { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 }
-    );
+    try {
+      const pos = await getPosition();
+      setOrigin({ mode: "gps", lat: pos.coords.latitude, lon: pos.coords.longitude });
+      store.set("dw.mode", "gps");
+      hideLocPanel();
+      sessionSkip.clear();
+      fetchPlaces();
+    } catch (err) {
+      const msgs = {
+        1: "Location permission was denied. You can allow it in your browser or phone settings, or search for a city or ZIP code below.",
+        2: "Your device couldn't determine its location. Check that Location Services are on, or search for a city or ZIP code below.",
+        3: "Finding your location timed out. Try again, or search for a city or ZIP code below."
+      };
+      let msg = msgs[err && err.code] || "Couldn't get your location. You can search for a city or ZIP code instead.";
+      if (location.protocol === "file:") msg += " (Opening this file directly can block location. Serve it from a web address instead.)";
+      setStatus("Couldn't get your location.", true, [{ label: "Try again", fn: locate }]);
+      showLocPanel(msg, places.length > 0);
+    }
   }
 
-  /* ---------- data ---------- */
+  const looksLikeAddress = (q) => /\d/.test(q) && q.trim().split(/\s+/).length > 1;
+
+  async function geocodeOpenMeteo(q) {
+    const r = await fetch("https://geocoding-api.open-meteo.com/v1/search?name=" + encodeURIComponent(q) + "&count=5&language=en&format=json");
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const j = await r.json();
+    return (j.results || []).map((x) => ({
+      lat: x.latitude, lon: x.longitude, tz: x.timezone || null,
+      label: [x.name, x.admin1, x.country_code].filter(Boolean).join(", ")
+    }));
+  }
+  async function geocodeNominatim(q) {
+    const r = await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&q=" + encodeURIComponent(q));
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const j = await r.json();
+    return j.map((x) => ({
+      lat: parseFloat(x.lat), lon: parseFloat(x.lon), tz: null,
+      label: String(x.display_name).split(",").slice(0, 3).join(",").trim()
+    }));
+  }
+  async function geocode(q) {
+    const order = looksLikeAddress(q) ? [geocodeNominatim, geocodeOpenMeteo] : [geocodeOpenMeteo, geocodeNominatim];
+    let lastErr = null;
+    for (const fn of order) {
+      try { const res = await fn(q); if (res.length) return res; }
+      catch (e) { lastErr = e; }
+    }
+    if (lastErr) throw lastErr;
+    return [];
+  }
+  async function lookupTz(lat, lon) {
+    try {
+      const r = await fetch("https://api.open-meteo.com/v1/forecast?current=temperature_2m&timezone=auto&latitude=" + lat + "&longitude=" + lon);
+      if (!r.ok) return null;
+      const j = await r.json();
+      return j.timezone || null;
+    } catch (e) { return null; }
+  }
+
+  async function chooseLocation(c) {
+    $("loc-msg").textContent = "Setting location…";
+    const tz = c.tz || await lookupTz(c.lat, c.lon);
+    setOrigin({ mode: "manual", lat: c.lat, lon: c.lon, label: c.label, tz });
+    store.set("dw.mode", "manual");
+    store.set("dw.manual", { lat: c.lat, lon: c.lon, label: c.label, tz });
+    hideLocPanel();
+    sessionSkip.clear();
+    fetchPlaces();
+  }
+
+  async function searchLocation(q) {
+    q = q.trim();
+    if (q.length < 2) { $("loc-msg").textContent = "Type a city, ZIP code, or address."; return; }
+    $("loc-results").textContent = "";
+    $("loc-msg").textContent = "Searching…";
+    let results;
+    try { results = await geocode(q); }
+    catch (e) { $("loc-msg").textContent = "Couldn't look that up. Check your connection and try again."; return; }
+    if (!results.length) { $("loc-msg").textContent = "No matches. Try a city name, ZIP code, or full street address."; return; }
+    if (results.length === 1) { chooseLocation(results[0]); return; }
+    $("loc-msg").textContent = "Pick the right one:";
+    const box = $("loc-results");
+    for (const c of results) {
+      const b = el("button", "", c.label);
+      b.type = "button";
+      b.addEventListener("click", () => chooseLocation(c));
+      box.appendChild(b);
+    }
+  }
+
+  function refreshSearch() {
+    if (!origin) return;
+    sessionSkip.clear();
+    if (origin.mode === "gps") locate(); else fetchPlaces();
+  }
+
+  /* ================= data ================= */
+  function haversineMiles(lat1, lon1, lat2, lon2) {
+    const R = 3958.8, rad = Math.PI / 180;
+    const dLat = (lat2 - lat1) * rad, dLon = (lon2 - lon1) * rad;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(a));
+  }
+
+  function cleanWebsite(raw) {
+    if (!raw) return null;
+    let u = String(raw).trim().split(";")[0].trim();
+    if (!u) return null;
+    if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+    try {
+      const parsed = new URL(u);
+      return /^https?:$/.test(parsed.protocol) ? parsed.href : null;
+    } catch (e) { return null; }
+  }
+  function cleanPhone(raw) {
+    if (!raw) return null;
+    const first = String(raw).split(";")[0].trim();
+    const digits = first.replace(/[^\d+]/g, "");
+    return digits.replace(/\D/g, "").length >= 7 ? { display: first, href: "tel:" + digits } : null;
+  }
+  const isYes = (v) => v === "yes" || v === "only";
+
+  function buildPlace(el_, tags, lat, lon, miles) {
+    const raw = tags.cuisine ? tags.cuisine.split(";").map((c) => c.trim().toLowerCase()).filter(Boolean) : [];
+    let cuisines = [...new Set(raw.map(prettyCuisine))];
+    if (!cuisines.length) { const inf = inferCuisine(tags.name); if (inf) cuisines = [inf]; }
+    const street = [tags["addr:housenumber"], tags["addr:street"]].filter(Boolean).join(" ");
+    const addr = [street, tags["addr:city"]].filter(Boolean).join(", ");
+    const vegan = isYes(tags["diet:vegan"]);
+    return {
+      id: el_.type + el_.id,
+      key: nameKey(tags.name),
+      name: tags.name,
+      type: tags.amenity,
+      cuisines,
+      lat, lon, miles,
+      hoursRaw: tags.opening_hours || "",
+      phone: cleanPhone(tags.phone || tags["contact:phone"]),
+      web: cleanWebsite(tags.website || tags["contact:website"] || tags.url),
+      addr,
+      vegan,
+      vegetarian: vegan || isYes(tags["diet:vegetarian"])
+    };
+  }
+
   function hideResults() {
-    places = []; pool = [];
-    controls.hidden = true; stage.hidden = true; listSection.hidden = true; resultEl.hidden = true;
+    places = []; pool = []; current = null;
+    controls.hidden = true; chipsEl.hidden = true; moreEl.hidden = true;
+    stage.hidden = true; listSection.hidden = true; resultEl.hidden = true;
+    $("wheel-note").textContent = "";
   }
 
   async function fetchPlaces() {
+    if (!origin) return;
     const token = ++fetchToken;
     const radius = radiusMiles;
     setStatus("Searching within " + miLabel(radius) + "…");
@@ -332,135 +869,234 @@
         break;
       } catch (e) { lastErr = e; }
     }
-    if (token !== fetchToken) return;   // radius changed while loading; a newer search is running
+    if (token !== fetchToken) return;       // a newer search replaced this one
+    const where = origin.mode === "gps" ? "you" : origin.label;
+    const changeAction = { label: "Change location", fn: () => showLocPanel("", true) };
     if (!data) {
       hideResults();
       setStatus("Couldn't load nearby places (" + (lastErr ? lastErr.message : "network error") + "). Check your connection" +
-        (radius > 10 ? ", or try a smaller radius" : "") + ", then try again.", true, "Try again", fetchPlaces);
+        (radius > 10 ? ", or try a smaller radius" : "") + ", then try again.", true,
+        [{ label: "Try again", fn: fetchPlaces }, changeAction]);
       return;
     }
 
-    // One entry per unique restaurant name: keep only the location closest to you.
-    // Names are compared ignoring case, accents, punctuation, and spacing,
-    // so "McDonald's" and "McDonalds" count as the same restaurant.
-    const nameKey = (n) => n.normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase().replace(/[^a-z0-9]/g, "") || n.toLowerCase();
+    // One entry per unique name: keep only the location closest to the search point.
     const closest = new Map();
-    for (const el of data.elements) {
-      const tags = el.tags || {};
+    for (const e of data.elements) {
+      const tags = e.tags || {};
       if (!tags.name) continue;
-      const plat = el.lat ?? (el.center && el.center.lat);
-      const plon = el.lon ?? (el.center && el.center.lon);
+      const plat = e.lat ?? (e.center && e.center.lat);
+      const plon = e.lon ?? (e.center && e.center.lon);
       if (plat == null || plon == null) continue;
       const miles = haversineMiles(lat, lon, plat, plon);
       if (miles > radius) continue;
       const key = nameKey(tags.name);
       const existing = closest.get(key);
       if (existing && existing.miles <= miles) continue;
-      closest.set(key, {
-        id: el.type + el.id,
-        name: tags.name,
-        type: tags.amenity,
-        cuisine: tags.cuisine ? tags.cuisine.split(";")[0].replace(/_/g, " ") : "",
-        lat: plat, lon: plon, miles
-      });
+      closest.set(key, buildPlace(e, tags, plat, plon, miles));
     }
     places = Array.from(closest.values()).sort((a, b) => a.miles - b.miles);
+    showAll = false;
+    for (const k of [...filt.cuisines]) if (!places.some((p) => p.cuisines.includes(k))) filt.cuisines.delete(k);
 
     if (!places.length) {
       hideResults();
-      setStatus("No named restaurants found within " + miLabel(radius) + ". Try a larger radius, or note that map data may be sparse in this area.", true, "Search again", fetchPlaces);
+      setStatus("No named restaurants found within " + miLabel(radius) + " of " + where + ". Try a larger radius. Map data may be sparse in this area.", true,
+        [{ label: "Search again", fn: fetchPlaces }, changeAction]);
       return;
     }
-    setStatus("Found " + places.length + " places within " + miLabel(radius) + " of you.");
-    controls.hidden = false; stage.hidden = false; listSection.hidden = false;
-    buildPool();
-    renderList();
+    let msg = "Found " + places.length + " place" + (places.length === 1 ? "" : "s") + " within " + miLabel(radius) + " of " + where + ".";
+    if (places.length < 8) msg += " That's a small list. Map data may be incomplete here, so a larger radius could help.";
+    setStatus(msg, false, [changeAction, { label: "Refresh", fn: refreshSearch }]);
+    controls.hidden = false; stage.hidden = false; listSection.hidden = false; moreEl.hidden = false;
+    updateHiddenUI();
+    refreshAll();
   }
 
-  function haversineMiles(lat1, lon1, lat2, lon2) {
-    const R = 3958.8, rad = Math.PI / 180;
-    const dLat = (lat2 - lat1) * rad, dLon = (lon2 - lon1) * rad;
-    const a = Math.sin(dLat / 2) ** 2 +
-      Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) ** 2;
-    return 2 * R * Math.asin(Math.sqrt(a));
+  /* ================= filtering, chips, pool ================= */
+  function passes(p, ignoreCuisine) {
+    if (hidden.has(p.key) || sessionSkip.has(p.key)) return false;
+    if (filt.type !== "all" && p.type !== filt.type) return false;
+    if (filt.fav && !favs[p.key]) return false;
+    if (filt.veg && !p.vegetarian) return false;
+    if (filt.vegan && !p.vegan) return false;
+    if (filt.openNow) {
+      const st = hoursStatus(p).state;
+      if (st === "closed") return false;
+      if (st === "unknown" && !prefs.unknownOk) return false;
+    }
+    if (!ignoreCuisine && filt.cuisines.size && !p.cuisines.some((c) => filt.cuisines.has(c))) return false;
+    return true;
   }
 
-  /* ---------- pool + list ---------- */
-  function candidates() {
-    return places.filter(p => !excluded.has(p.id) && (filter === "all" || p.type === filter));
+  function refreshAll() { renderChips(); buildPool(); }
+
+  function renderChips() {
+    const active = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.chip : null;
+    chipsEl.textContent = "";
+    if (!places.length) { chipsEl.hidden = true; return; }
+    chipsEl.hidden = false;
+    const mk = (id, label, pressed, onClick) => {
+      const b = el("button", "chip", label);
+      b.type = "button";
+      b.dataset.chip = id;
+      b.setAttribute("aria-pressed", String(pressed));
+      b.addEventListener("click", () => { if (spinning) return; onClick(); });
+      chipsEl.appendChild(b);
+    };
+    mk("open", "Open now", filt.openNow, () => { filt.openNow = !filt.openNow; refreshAll(); });
+    const favCount = places.filter((p) => favs[p.key] && !hidden.has(p.key)).length;
+    if (favCount || filt.fav) mk("fav", "♥ Favorites (" + favCount + ")", filt.fav, () => { filt.fav = !filt.fav; refreshAll(); });
+    if (places.some((p) => p.vegetarian) || filt.veg) mk("veg", "Vegetarian-friendly", filt.veg, () => { filt.veg = !filt.veg; refreshAll(); });
+    if (places.some((p) => p.vegan) || filt.vegan) mk("vegan", "Vegan options", filt.vegan, () => { filt.vegan = !filt.vegan; refreshAll(); });
+
+    const counts = new Map();
+    for (const p of places) {
+      if (!passes(p, true)) continue;
+      for (const c of p.cuisines) counts.set(c, (counts.get(c) || 0) + 1);
+    }
+    for (const c of filt.cuisines) if (!counts.has(c)) counts.set(c, 0);
+    const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    sorted.filter(([c], i) => i < 10 || filt.cuisines.has(c)).forEach(([c, n]) => {
+      mk("c:" + c, c + " (" + n + ")", filt.cuisines.has(c), () => {
+        if (filt.cuisines.has(c)) filt.cuisines.delete(c); else filt.cuisines.add(c);
+        refreshAll();
+      });
+    });
+    if (filt.openNow || filt.fav || filt.veg || filt.vegan || filt.cuisines.size) {
+      mk("clear", "Clear filters", false, () => {
+        filt.openNow = filt.fav = filt.veg = filt.vegan = false; filt.cuisines.clear(); refreshAll();
+      });
+    }
+    if (active) {
+      const b = chipsEl.querySelector('[data-chip="' + (window.CSS && CSS.escape ? CSS.escape(active) : active) + '"]');
+      if (b) b.focus();
+    }
   }
 
   function buildPool() {
-    const all = candidates();
-    const n = parseInt($("slices").value, 10);
-    // Fisher-Yates shuffle, then take n
+    let all = places.filter((p) => passes(p, false));
+    if (prefs.skipRecent) {
+      const cutoff = Date.now() - 7 * 86400000;
+      const recentKeys = new Set(recent.filter((r) => r.t > cutoff).map((r) => r.key));
+      const fresh = all.filter((p) => !recentKeys.has(p.key));
+      if (fresh.length >= 2) all = fresh;
+    }
+    eligibleCount = all.length;
     const arr = all.slice();
     for (let i = arr.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [arr[i], arr[j]] = [arr[j], arr[i]];
     }
-    pool = arr.slice(0, n);
+    pool = arr.slice(0, prefs.slices);
+    winnerIdx = -1;
     resultEl.hidden = true;
+    current = null;
     spinBtn.disabled = pool.length < 2;
+    const note = $("wheel-note");
+    if (!eligibleCount) note.textContent = "No places match these filters. Try clearing one.";
+    else if (eligibleCount === 1) note.textContent = "Only one place matches. Loosen a filter to spin.";
+    else if (eligibleCount <= prefs.slices) note.textContent = "All " + eligibleCount + " matching places are on the wheel.";
+    else note.textContent = pool.length + " of " + eligibleCount + " matching places are on this wheel. Tap Shuffle for a new set.";
+    canvas.setAttribute("aria-label", "Wheel with " + pool.length + " restaurants");
     drawWheel();
     renderList();
+    renderRecent();
   }
 
+  /* ================= list ================= */
   function renderList() {
-    const all = candidates();
+    const all = places.filter((p) => passes(p, false));
+    if ($("sort").value === "name") all.sort((a, b) => a.name.localeCompare(b.name));
     $("count").textContent = all.length + " place" + (all.length === 1 ? "" : "s");
     const ul = $("places");
     ul.textContent = "";
-    for (const p of all) {
-      const li = document.createElement("li");
-      const left = document.createElement("div");
-      const name = document.createElement("div");
-      name.className = "name"; name.textContent = p.name;
-      const meta = document.createElement("div");
-      meta.className = "meta";
-      meta.textContent = (p.type === "fast_food" ? "Fast food" : "Restaurant") + (p.cuisine ? " · " + p.cuisine : "");
-      left.append(name, meta);
-      const dist = document.createElement("div");
-      dist.className = "dist"; dist.textContent = p.miles.toFixed(1) + " mi";
-      li.append(left, dist);
+    const shown = showAll ? all : all.slice(0, LIST_LIMIT);
+    for (const p of shown) {
+      const li = el("li");
+      const btn = el("button", "place");
+      btn.type = "button";
+      btn.setAttribute("aria-label", "Show details for " + p.name);
+      const left = el("div");
+      const name = el("div", "name", p.name);
+      if (favs[p.key]) name.appendChild(el("span", "heart", "♥"));
+      const kind = p.type === "fast_food" ? "Fast food" : "Restaurant";
+      left.append(name, el("div", "meta", kind + (p.cuisines.length ? " · " + p.cuisines.slice(0, 2).join(", ") : "")));
+      const right = el("div", "right");
+      right.appendChild(el("div", "dist", p.miles.toFixed(1) + " mi"));
+      const st = hoursStatus(p);
+      if (st.state === "open") right.appendChild(el("div", "st " + (st.soon ? "soon" : "open"), st.soon ? "Closing soon" : "Open"));
+      else if (st.state === "closed") right.appendChild(el("div", "st closed", "Closed"));
+      btn.append(left, right);
+      btn.addEventListener("click", () => { if (!spinning) showResult(p, false); });
+      li.appendChild(btn);
+      ul.appendChild(li);
+    }
+    const more = $("show-all");
+    more.hidden = all.length <= LIST_LIMIT;
+    more.textContent = showAll ? "Show fewer" : "Show all " + all.length;
+  }
+
+  function renderRecent() {
+    const section = $("recent-section"), ul = $("recent-list");
+    ul.textContent = "";
+    const items = recent.slice(0, 5);
+    section.hidden = !items.length;
+    for (const r of items) {
+      const days = Math.floor((Date.now() - r.t) / 86400000);
+      const li = el("li");
+      li.append(el("span", "", r.name), el("span", "when", days <= 0 ? "today" : days === 1 ? "yesterday" : days + " days ago"));
       ul.appendChild(li);
     }
   }
 
-  /* ---------- wheel drawing ---------- */
+  function updateHiddenUI() {
+    $("hidden-count").textContent = hidden.size + " hidden place" + (hidden.size === 1 ? "" : "s");
+    $("reset-hidden").disabled = hidden.size === 0;
+  }
+
+  /* ================= wheel drawing ================= */
   function sizeCanvas() {
     const dpr = window.devicePixelRatio || 1;
-    const size = canvas.clientWidth;
+    const size = canvas.clientWidth || 300;
     canvas.width = Math.round(size * dpr);
     canvas.height = Math.round(size * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     return size;
   }
 
+  function fitText(text, maxW) {
+    if (ctx.measureText(text).width <= maxW) return text;
+    let t = text;
+    while (t.length > 1 && ctx.measureText(t + "…").width > maxW) t = t.slice(0, -1);
+    return t.trimEnd() + "…";
+  }
+
   function drawWheel() {
     const size = sizeCanvas();
     const c = size / 2, r = c - 8;
     ctx.clearRect(0, 0, size, size);
-
-    // rim
-    ctx.beginPath(); ctx.arc(c, c, r + 6, 0, Math.PI * 2);
+    ctx.beginPath(); ctx.arc(c, c, r + 6, 0, TWO);
     ctx.fillStyle = "#fbf8f1"; ctx.fill();
 
-    if (!pool.length) return;
-    const n = pool.length, a = (Math.PI * 2) / n;
-
+    if (!pool.length) {
+      ctx.beginPath(); ctx.arc(c, c, r, 0, TWO);
+      ctx.fillStyle = "#1b4452"; ctx.fill();
+      ctx.fillStyle = "#9bb8c0"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.font = `600 ${Math.max(14, size * 0.04)}px "Bricolage Grotesque", system-ui, sans-serif`;
+      ctx.fillText("No matching places", c, c + size * 0.18);
+      return;
+    }
+    const n = pool.length, a = TWO / n;
     for (let i = 0; i < n; i++) {
       const start = rotation + i * a, end = start + a;
+      ctx.globalAlpha = winnerIdx >= 0 && i !== winnerIdx ? 0.4 : 1;
       ctx.beginPath(); ctx.moveTo(c, c);
       ctx.arc(c, c, r, start, end); ctx.closePath();
-      ctx.fillStyle = COLORS[i % COLORS.length];
-      // avoid same color touching at the wrap point
-      if (n % COLORS.length === 1 && i === n - 1) ctx.fillStyle = "#8fa9b3";
+      ctx.fillStyle = (n % COLORS.length === 1 && i === n - 1) ? "#8fa9b3" : COLORS[i % COLORS.length];
       ctx.fill();
       ctx.lineWidth = 2; ctx.strokeStyle = "#0f2a33"; ctx.stroke();
 
-      // label
       ctx.save();
       ctx.translate(c, c);
       ctx.rotate(start + a / 2);
@@ -468,55 +1104,135 @@
       ctx.fillStyle = "#0f2a33";
       const fontPx = Math.max(11, Math.min(18, size * (n > 16 ? 0.028 : 0.036)));
       ctx.font = `600 ${fontPx}px "Bricolage Grotesque", system-ui, sans-serif`;
-      const maxW = r * 0.62;
-      ctx.fillText(fit(pool[i].name, maxW), r - 14, 0);
+      ctx.fillText(fitText(pool[i].name, r * 0.62), r - 14, 0);
       ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+    if (winnerIdx >= 0) {            // bright outline around the winning slice
+      const start = rotation + winnerIdx * a;
+      ctx.beginPath(); ctx.moveTo(c, c);
+      ctx.arc(c, c, r - 2, start, start + a); ctx.closePath();
+      ctx.lineWidth = 5; ctx.strokeStyle = "#fbf8f1"; ctx.stroke();
     }
   }
 
-  function fit(text, maxW) {
-    if (ctx.measureText(text).width <= maxW) return text;
-    let t = text;
-    while (t.length > 1 && ctx.measureText(t + "…").width > maxW) t = t.slice(0, -1);
-    return t.trimEnd() + "…";
+  function sliceAt(rot) {
+    const n = pool.length, a = TWO / n;
+    const ang = (((-Math.PI / 2 - rot) % TWO) + TWO) % TWO;   // pointer sits at the top
+    return Math.floor(ang / a) % n;
   }
 
-  /* ---------- spinning ---------- */
+  /* ================= sound, haptics, confetti ================= */
+  let audioCtx = null;
+  function ensureAudio() {
+    if (!prefs.sound) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+    } catch (e) { audioCtx = null; }
+  }
+  function beep(freq, dur, vol, type, delay) {
+    if (!audioCtx || !prefs.sound) return;
+    try {
+      const t = audioCtx.currentTime + (delay || 0);
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = type || "square";
+      o.frequency.setValueAtTime(freq, t);
+      g.gain.setValueAtTime(vol, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(t); o.stop(t + dur + 0.02);
+    } catch (e) { /* audio unavailable */ }
+  }
+  const tick = () => beep(1100, 0.035, 0.05, "square");
+  function fanfare() {
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => beep(f, 0.25, 0.09, "triangle", i * 0.09));
+  }
+
+  const confettiCanvas = $("confetti"), cctx = confettiCanvas.getContext("2d");
+  let confettiRun = 0;
+  function confetti() {
+    if (reduceMotion) return;
+    const run = ++confettiRun;
+    const dpr = window.devicePixelRatio || 1, w = window.innerWidth, h = window.innerHeight;
+    confettiCanvas.width = w * dpr; confettiCanvas.height = h * dpr;
+    cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const rect = canvas.getBoundingClientRect();
+    const ox = rect.left + rect.width / 2, oy = rect.top + rect.height / 2;
+    const parts = Array.from({ length: 110 }, () => {
+      const ang = Math.random() * TWO, sp = 4 + Math.random() * 8;
+      return {
+        x: ox, y: oy, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 4,
+        w: 5 + Math.random() * 6, h: 3 + Math.random() * 5, rot: Math.random() * TWO,
+        vr: (Math.random() - 0.5) * 0.4, color: COLORS[Math.floor(Math.random() * COLORS.length)]
+      };
+    });
+    const t0 = performance.now();
+    (function frame(now) {
+      if (run !== confettiRun) return;
+      const t = (now - t0) / 2400;
+      cctx.clearRect(0, 0, w, h);
+      if (t >= 1) return;
+      cctx.globalAlpha = Math.min(1, (1 - t) * 2);
+      for (const p of parts) {
+        p.vy += 0.2; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+        cctx.save(); cctx.translate(p.x, p.y); cctx.rotate(p.rot);
+        cctx.fillStyle = p.color; cctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        cctx.restore();
+      }
+      requestAnimationFrame(frame);
+    })(t0);
+  }
+
+  /* ================= spinning ================= */
+  function setSpinLock(on) {
+    spinning = on;
+    radiusSel.disabled = on;
+    spinBtn.disabled = on || pool.length < 2;
+    $("r-again").disabled = on;
+  }
+
   function spin() {
     if (spinning || pool.length < 2) return;
-    spinning = true;
-    spinBtn.disabled = true;
-    $("radius").disabled = true;
+    ensureAudio();
+    setSpinLock(true);
+    winnerIdx = -1;
     resultEl.hidden = true;
+    current = null;
 
-    const extraTurns = 5 + Math.floor(Math.random() * 3);
-    const target = rotation + extraTurns * Math.PI * 2 + Math.random() * Math.PI * 2;
     const from = rotation;
+    const target = rotation + (5 + Math.floor(Math.random() * 3)) * TWO + Math.random() * TWO;
     const duration = reduceMotion ? 600 : 5000 + Math.random() * 1500;
     const t0 = performance.now();
+    let lastIdx = sliceAt(rotation);
 
     function frame(now) {
       const t = Math.min(1, (now - t0) / duration);
-      const eased = 1 - Math.pow(1 - t, 4); // ease-out quart
-      rotation = from + (target - from) * eased;
+      rotation = from + (target - from) * (1 - Math.pow(1 - t, 4));
+      const idx = sliceAt(rotation);
+      if (idx !== lastIdx) { lastIdx = idx; tick(); }
       drawWheel();
-      if (t < 1) requestAnimationFrame(frame);
-      else finish();
+      if (t < 1) requestAnimationFrame(frame); else finish();
     }
     requestAnimationFrame(frame);
   }
 
   function finish() {
-    spinning = false;
-    $("radius").disabled = false;
-    spinBtn.disabled = pool.length < 2;
-    const n = pool.length, a = (Math.PI * 2) / n, TWO = Math.PI * 2;
-    // pointer sits at the top (-90deg); find which slice covers that angle
-    const pointerAngle = ((-Math.PI / 2 - rotation) % TWO + TWO) % TWO;
-    const winner = pool[Math.floor(pointerAngle / a) % n];
-    showResult(winner);
+    setSpinLock(false);
+    winnerIdx = sliceAt(rotation);
+    drawWheel();
+    const winner = pool[winnerIdx];
+    fanfare();
+    confetti();
+    if (navigator.vibrate) { try { navigator.vibrate([25, 40, 60]); } catch (e) { /* ignore */ } }
+    recent = [{ key: winner.key, name: winner.name, t: Date.now() }]
+      .concat(recent.filter((r) => r.key !== winner.key)).slice(0, 10);
+    store.set("dw.recent", recent);
+    renderRecent();
+    showResult(winner, true);
   }
 
+  /* ================= result card ================= */
   const isApple = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
@@ -532,30 +1248,133 @@
     }
   }
 
-  function showResult(p) {
+  function updateStatusBadge() {
+    if (!current) return;
+    const st = hoursStatus(current);
+    const b = $("r-status");
+    b.textContent = st.text;
+    b.className = "badge " + (st.state === "open" && st.soon ? "soon" : st.state);
+  }
+
+  function updateFavButton() {
+    if (!current) return;
+    const on = !!favs[current.key];
+    const b = $("r-fav");
+    b.setAttribute("aria-pressed", String(on));
+    b.setAttribute("aria-label", on ? "Remove from favorites" : "Save to favorites");
+    b.textContent = on ? "♥" : "♡";
+  }
+
+  function showResult(p, fromSpin) {
+    current = p;
+    $("r-eyebrow").textContent = fromSpin ? "Tonight's pick" : "Selected";
     $("r-name").textContent = p.name;
     const kind = p.type === "fast_food" ? "Fast food" : "Restaurant";
-    $("r-meta").textContent = kind + (p.cuisine ? " · " + p.cuisine : "") + " · " + p.miles.toFixed(1) + " miles away";
+    const diet = p.vegan ? "Vegan options" : p.vegetarian ? "Vegetarian-friendly" : "";
+    $("r-meta").textContent = [kind, p.cuisines.slice(0, 2).join(", "), p.miles.toFixed(1) + " miles away", diet]
+      .filter(Boolean).join(" · ");
+    updateStatusBadge();
+    const addr = $("r-addr");
+    addr.textContent = p.addr;
+    addr.hidden = !p.addr;
+
     directionsFor(p);
-    $("r-skip").onclick = () => { excluded.add(p.id); buildPool(); };
+    const call = $("r-call");
+    if (p.phone) { call.href = p.phone.href; call.textContent = "Call " + p.phone.display; call.hidden = false; }
+    else { call.hidden = true; call.removeAttribute("href"); }
+    const web = $("r-web");
+    if (p.web) { web.href = p.web; web.hidden = false; } else { web.hidden = true; web.removeAttribute("href"); }
+    updateFavButton();
+
     resultEl.hidden = false;
+    resultEl.classList.remove("pop");
+    void resultEl.offsetWidth;
+    if (!reduceMotion) resultEl.classList.add("pop");
     resultEl.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "nearest" });
   }
 
-  /* ---------- events ---------- */
+  async function sharePick(p) {
+    const link = "https://www.google.com/maps/search/?api=1&query=" + p.lat + "," + p.lon;
+    const text = "Let's eat at " + p.name + "! (" + p.miles.toFixed(1) + " miles away)";
+    if (navigator.share) {
+      try { await navigator.share({ title: p.name, text, url: link }); } catch (e) { /* cancelled */ }
+      return;
+    }
+    try { await navigator.clipboard.writeText(text + " " + link); toast("Copied to clipboard"); }
+    catch (e) { toast("Sharing isn't available on this device"); }
+  }
+
+  /* ================= events ================= */
   spinBtn.addEventListener("click", spin);
+  $("r-again").addEventListener("click", () => {
+    if (spinning) return;
+    stage.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+    setTimeout(spin, reduceMotion ? 0 : 250);
+  });
   $("reshuffle").addEventListener("click", () => { if (!spinning) buildPool(); });
-  $("slices").addEventListener("change", () => { if (!spinning) buildPool(); });
-  controls.querySelectorAll("[data-filter]").forEach(btn => {
+
+  controls.querySelectorAll("[data-filter]").forEach((btn) => {
     btn.addEventListener("click", () => {
       if (spinning) return;
-      filter = btn.dataset.filter;
-      controls.querySelectorAll("[data-filter]").forEach(b =>
-        b.setAttribute("aria-pressed", String(b === btn)));
-      buildPool();
+      filt.type = btn.dataset.filter;
+      controls.querySelectorAll("[data-filter]").forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+      refreshAll();
     });
   });
-  const radiusSel = $("radius");
+
+  $("r-fav").addEventListener("click", () => {
+    if (!current) return;
+    if (favs[current.key]) delete favs[current.key]; else favs[current.key] = current.name;
+    store.set("dw.favs", favs);
+    updateFavButton();
+    renderChips();
+    renderList();
+  });
+  $("r-share").addEventListener("click", () => { if (current) sharePick(current); });
+  $("r-skip").addEventListener("click", () => {
+    if (spinning || !current) return;
+    sessionSkip.add(current.key);
+    refreshAll();
+  });
+  $("r-never").addEventListener("click", () => {
+    if (spinning || !current) return;
+    const name = current.name;
+    hidden.add(current.key);
+    store.set("dw.hidden", [...hidden]);
+    updateHiddenUI();
+    refreshAll();
+    toast(name + " hidden. Reset it under More options.");
+  });
+  $("reset-hidden").addEventListener("click", () => {
+    hidden = new Set();
+    store.set("dw.hidden", []);
+    updateHiddenUI();
+    if (!spinning && places.length) refreshAll();
+  });
+  $("clear-recent").addEventListener("click", () => {
+    recent = [];
+    store.set("dw.recent", recent);
+    renderRecent();
+  });
+
+  $("slices").value = String(prefs.slices);
+  $("slices").addEventListener("change", () => {
+    if (spinning) { $("slices").value = String(prefs.slices); return; }
+    prefs.slices = parseInt($("slices").value, 10); savePrefs(); buildPool();
+  });
+  for (const [id, key, rebuild] of [["opt-unknown", "unknownOk", true], ["opt-recent", "skipRecent", true], ["opt-sound", "sound", false]]) {
+    const box = $(id);
+    box.checked = !!prefs[key];
+    box.addEventListener("change", () => {
+      if (spinning) { box.checked = !!prefs[key]; return; }
+      prefs[key] = box.checked; savePrefs();
+      if (key === "sound" && box.checked) ensureAudio();
+      if (rebuild && places.length) refreshAll();
+    });
+  }
+  $("sort").addEventListener("change", renderList);
+  $("show-all").addEventListener("click", () => { showAll = !showAll; renderList(); });
+
   const ledeRadius = $("lede-radius");
   radiusSel.value = String(radiusMiles);
   ledeRadius.textContent = miLabel(radiusMiles);
@@ -563,27 +1382,37 @@
     if (spinning) { radiusSel.value = String(radiusMiles); return; }
     radiusMiles = parseInt(radiusSel.value, 10);
     ledeRadius.textContent = miLabel(radiusMiles);
-    try { localStorage.setItem("dinnerWheelRadius", String(radiusMiles)); } catch (e) {}
-    excluded = new Set();
+    store.set("dinnerWheelRadius", radiusMiles);
+    sessionSkip.clear();
     resultEl.hidden = true;
-    if (origin) fetchPlaces();       // reuse the known location; no new GPS lookup
+    if (origin) fetchPlaces();
   });
-  $("relocate").addEventListener("click", () => {
-    if (spinning) return;
-    excluded = new Set();
-    resultEl.hidden = true;
-    locate();
-  });
+
+  $("use-gps").addEventListener("click", locate);
+  $("loc-form").addEventListener("submit", (e) => { e.preventDefault(); searchLocation($("loc-q").value); });
+  $("loc-cancel").addEventListener("click", hideLocPanel);
+
   window.addEventListener("resize", () => { if (!stage.hidden) drawWheel(); });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") return;
+    nowCache = { t: 0, v: null };            // keep "open now" fresh when the app is reopened
+    if (places.length && !spinning) { renderChips(); renderList(); updateStatusBadge(); }
+  });
 
-  // Offline-capable app shell (only works over https or localhost)
-  if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("sw.js").catch(() => {});
-    });
+  /* ================= start ================= */
+  renderRecent();
+  {
+    const mode = store.get("dw.mode", null);
+    const manual = store.get("dw.manual", null);
+    if (mode === "manual" && manual && Number.isFinite(manual.lat) && Number.isFinite(manual.lon)) {
+      setOrigin({ mode: "manual", lat: manual.lat, lon: manual.lon, label: manual.label || "your chosen place", tz: manual.tz || null });
+      fetchPlaces();
+    } else if (mode === "gps") {
+      locate();
+    } else {
+      showLocPanel("", false);
+    }
   }
-
-  locate();
 })();
 </script>
 </body>
